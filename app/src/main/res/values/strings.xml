@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Turistic</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+    <string name="log_in">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="back4app_server_url">https://parseapi.back4app.com/</string>
+    <string name="back4app_app_id">rrl0PryJP5cNDS25ZrCX4fZiA1g5DMyLnyjT5sCq</string>
+    <string name="back4app_client_key">6UlZPSfPsAFqdZgiHTdBFU547oDSM8j9pjh8uhCA</string>
+    <string name="log_out">Log Out</string>
+    <string name="compose">Compose</string>
+    <string name="logo">Logo</string>
+</resources>
