@@ -16,4 +16,11 @@
     <string name="search">Search</string>
     <string name="home">Home</string>
     <string name="profile">Profile</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title">Title</string>
+    <string name="take_picture">Take picture</string>
+    <string name="submit_pictures">Submit pictures</string>
+    <string name="image_to_post">Image to Post</string>
+    <string name="caption">Caption</string>
+    <string name="post">Post</string>
 </resources>
