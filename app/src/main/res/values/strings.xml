@@ -13,4 +13,7 @@
     <string name="confirm_password">confirm password</string>
     <string name="name">Name</string>
     <string name="last_name">Last Name</string>
+    <string name="search">Search</string>
+    <string name="home">Home</string>
+    <string name="profile">Profile</string>
 </resources>
