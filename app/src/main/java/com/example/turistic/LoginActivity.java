@@ -34,21 +34,15 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         btnSignUp = findViewById(R.id.btnSignUp);
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String password = etLoginPassword.getText().toString();
-                String username = etLoginUsername.getText().toString();
-                loginUser(username, password);
-            }
+        btnLogin.setOnClickListener(v -> {
+            String password = etLoginPassword.getText().toString();
+            String username = etLoginUsername.getText().toString();
+            loginUser(username, password);
         });
 
-        btnSignUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(LoginActivity.this, SignupActivity.class);
-                startActivity(i);
-            }
+        btnSignUp.setOnClickListener(v -> {
+            Intent i = new Intent(LoginActivity.this, SignupActivity.class);
+            startActivity(i);
         });
     }
 
@@ -65,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goFeedActivity() {
-        Intent i = new Intent(this, FeedActivity.class);
+        Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
     }
 }

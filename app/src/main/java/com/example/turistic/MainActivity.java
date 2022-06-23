@@ -21,7 +21,7 @@ import com.parse.ParseUser;
 
 import java.util.Objects;
 
-public class FeedActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "FeedActivity";
     final FragmentManager fragmentManager = getSupportFragmentManager();
@@ -34,7 +34,7 @@ public class FeedActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         getSupportActionBar().setCustomView(R.layout.toolbar_feed_layout);
 
-        setContentView(R.layout.activity_feed);
+        setContentView(R.layout.activity_main);
 
         ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
@@ -48,13 +48,13 @@ public class FeedActivity extends AppCompatActivity {
             //Check there is no current user
             ParseUser currentUser = ParseUser.getCurrentUser();
             if(currentUser == null){
-                Intent i = new Intent(FeedActivity.this, LoginActivity.class);
+                Intent i = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(i);
             }
         }));
 
         btnFeedSearchPost.setOnClickListener(v -> {
-            Intent i = new Intent(FeedActivity.this, SearchActivity.class);
+            Intent i = new Intent(MainActivity.this, SearchActivity.class);
             startActivity(i);
         });
 
@@ -62,16 +62,13 @@ public class FeedActivity extends AppCompatActivity {
             Fragment fragment;
             switch (item.getItemId()){
                 case R.id.action_profile:
-                    Toast.makeText(FeedActivity.this, "Profile", Toast.LENGTH_SHORT).show();
                     fragment = new ProfileFragment();
                     break;
                 case R.id.action_compose:
-                    Toast.makeText(FeedActivity.this, "Search", Toast.LENGTH_SHORT).show();
                     fragment = new ComposeFragment();
                     break;
                 case R.id.action_feed:
                 default:
-                    Toast.makeText(FeedActivity.this, "Home", Toast.LENGTH_SHORT).show();
                     fragment = new FeedFragment();
                     break;
             }

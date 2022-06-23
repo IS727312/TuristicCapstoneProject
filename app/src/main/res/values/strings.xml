@@ -23,4 +23,7 @@
     <string name="image_to_post">Image to Post</string>
     <string name="caption">Caption</string>
     <string name="post">Post</string>
+    <string name="user_profile_picture">User profile picture</string>
+    <string name="post_of_the_picture">Post of the Picture</string>
+    <string name="example_caption">Example Caption</string>
 </resources>

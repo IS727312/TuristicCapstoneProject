@@ -19,16 +19,16 @@ public class Post extends ParseObject {
     public static final String KEY_LIKES = "likes";
     public static final String KEY_TITLE = "title";
 
-    public String getCaption() {return KEY_CAPTION; }
+    public String getCaption() {return getString(KEY_CAPTION); }
     public void setCaption(String caption) {put(KEY_CAPTION, caption); }
     public ParseFile getPicture() {return getParseFile(KEY_PICTURE); }
     public void  setPicture(ParseFile picture) {put(KEY_PICTURE, picture); }
     public ParseUser getOwner() {return  getParseUser(KEY_OWNER); }
     public void setOwner(ParseUser owner) {put(KEY_OWNER, owner); }
-    public String getTitle() {return KEY_TITLE; }
+    public String getTitle() {return getString(KEY_TITLE); }
     public void setTitle(String title) {put(KEY_TITLE, title); }
     public int getLikes() {return getInt(KEY_LIKES); }
-    public void increaeLikes() {put(KEY_LIKES, getLikes() + 1);}
+    public void increaseLikes() {put(KEY_LIKES, getLikes() + 1);}
 
     public String getRelativeTimeAgo(Date createdAt) {
         final int SECOND_MILLIS = 1000;

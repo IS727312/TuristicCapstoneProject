@@ -25,7 +25,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.turistic.BitmapScaler;
-import com.example.turistic.FeedActivity;
+import com.example.turistic.MainActivity;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
 import com.parse.ParseFile;
@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 
 public class ComposeFragment extends Fragment {
@@ -48,6 +49,9 @@ public class ComposeFragment extends Fragment {
     private EditText etComposeCaption;
     private File photoFile;
     public String photoFileName = "photo.jpg";
+    public static final int PICTURE_TAKEN = 0;
+    public static final int PICTURE_SUBMITTED = 0;
+    private int pictureOrigin;
 
     public ComposeFragment() {
         // Required empty public constructor
@@ -76,6 +80,8 @@ public class ComposeFragment extends Fragment {
         btnComposeSubmitPost.setOnClickListener(v -> {
             String caption = etComposeCaption.getText().toString();
             String title = etComposeTitle.getText().toString();
+            Log.i(TAG, caption);
+            Log.i(TAG, title);
             if(caption.isEmpty() || title.isEmpty()){
                 Toast.makeText(getContext(), "Empty fields", Toast.LENGTH_SHORT).show();
                 return;
@@ -85,47 +91,40 @@ public class ComposeFragment extends Fragment {
             }
             ParseUser currentUser = ParseUser.getCurrentUser();
             savePosts(caption, title, currentUser, photoFile);
-            Intent i = new Intent(getContext(), FeedActivity.class);
+            Intent i = new Intent(getContext(), MainActivity.class);
             startActivity(i);
         });
 
-        btnComposeSubmitPicture.setOnClickListener(v -> {
-            Log.i(TAG, "Upload pictures");
-            Toast.makeText(getContext(), "SELECT PICTURES", Toast.LENGTH_SHORT).show();
-            imageChooser();
-        });
+        btnComposeSubmitPicture.setOnClickListener(v -> Log.i(TAG, "Upload pictures"));
     }
 
     private void savePosts(String caption, String title, ParseUser currentUser, File photoFile) {
-        Post post = new Post();
-        post.setTitle(title);
-        post.setPicture(new ParseFile(photoFile));
-        post.setCaption(caption);
-        post.setOwner(currentUser);
-        post.saveInBackground(e -> {
-            if(e != null){
-                Log.e(TAG, "Error while saving the post: ", e);
-                return;
-            }
-            Log.i(TAG, "Save successful");
-            etComposeCaption.setText("");
-            etComposeTitle.setText("");
-            ivComposePictureToPost.setImageResource(0);
-        });
+            Post post = new Post();
+            post.setTitle(title);
+            post.setPicture(new ParseFile(photoFile));
+            post.setCaption(caption);
+            post.setOwner(currentUser);
+            post.saveInBackground(e -> {
+                if(e != null){
+                    Log.e(TAG, "Error while saving the post: ", e);
+                    return;
+                }
+                Log.i(TAG, "Save successful");
+                etComposeTitle.setText("");
+                etComposeCaption.setText("");
+                ivComposePictureToPost.setImageResource(0);
+            });
     }
 
     private void launchCamera(){
         // create Intent to take a picture and return control to the calling application
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Create a File reference for future access
         photoFile = getPhotoFileUri(photoFileName);
         // wrap File object into a content provider
         // required for API >= 24
         // See https://guides.codepath.com/android/Sharing-Content-with-Intents#sharing-files-with-api-24-or-higher
         Uri fileProvider = FileProvider.getUriForFile(requireContext(), "com.codepath.fileprovider", photoFile);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider);
-        // If you call startActivityForResult() using an intent that no app can handle, your app will crash.
-        // So as long as the result is not null, it's safe to use the intent.
         if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
             // Start the image capture intent to take photo
             startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
@@ -144,21 +143,19 @@ public class ComposeFragment extends Fragment {
         }
 
         // Return the file target for the photo based on filename
-
         return new File(mediaStorageDir.getPath() + File.separator + fileName);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE || requestCode == SELECT_PICTURE) {
             if (resultCode == RESULT_OK) {
                 // by this point we have the camera photo on disk
                 Bitmap takenImage = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
                 // RESIZE BITMAP, see section below
                 // Load the taken image into a preview
                 //All the code below helps to resize the image
-                //
                 Uri takenPhotoUri = Uri.fromFile(getPhotoFileUri(photoFileName));
                 // by this point we have the camera photo on disk
                 Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
@@ -194,21 +191,19 @@ public class ComposeFragment extends Fragment {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
+                pictureOrigin = PICTURE_TAKEN;
                 ivComposePictureToPost.setImageBitmap(takenImage);
-            } else { // Result was a failure
+            } else {
                 Toast.makeText(getContext(), "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
             }
         }
-
         if (requestCode == SELECT_PICTURE) {
-            // compare the resultCode with the
-            // SELECT_PICTURE constant
             if (resultCode == RESULT_OK) {
                 // Get the url of the image from data
                 Uri selectedImageUri = data.getData();
                 if (null != selectedImageUri) {
                     // update the preview image in the layout
+                    pictureOrigin = PICTURE_SUBMITTED;
                     ivComposePictureToPost.setImageURI(selectedImageUri);
                 }
             }
@@ -219,13 +214,12 @@ public class ComposeFragment extends Fragment {
 
         // create an instance of the
         // intent of the type image
-        Intent i = new Intent();
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.setType("image/*");
-        i.setAction(Intent.ACTION_GET_CONTENT);
 
         // pass the constant to compare it
         // with the returned requestCode
-        startActivityForResult(Intent.createChooser(i, "Select Picture"), SELECT_PICTURE);
+        startActivityForResult(i, SELECT_PICTURE);
     }
 
 }

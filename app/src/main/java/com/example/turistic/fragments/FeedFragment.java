@@ -1,5 +1,6 @@
 package com.example.turistic.fragments;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,12 +10,24 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.example.turistic.PostAdapter;
 import com.example.turistic.R;
+import com.example.turistic.models.Post;
+import com.parse.ParseQuery;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FeedFragment extends Fragment {
 
     public static final String TAG = "FeedFragment";
+    private SwipeRefreshLayout srFeedFragment;
+    protected PostAdapter adapter;
+    protected List<Post> allPosts;
 
     public FeedFragment(){
         // Required empty public constructor
@@ -29,5 +42,43 @@ public class FeedFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        RecyclerView rvFeedFragment = view.findViewById(R.id.rvFeedFragment);
+        srFeedFragment = view.findViewById(R.id.srFeedFragment);
+
+        allPosts = new ArrayList<>();
+        adapter = new PostAdapter(getContext(), allPosts);
+
+        rvFeedFragment.setAdapter(adapter);
+        rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        getPosts();
+
+        srFeedFragment.setOnRefreshListener(() -> {
+            allPosts.clear();
+            getPosts();
+            srFeedFragment.setRefreshing(false);
+        });
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void getPosts() {
+        // specify what type of data we want to query - Post.class
+        ParseQuery<Post> query = ParseQuery.getQuery(Post.class);
+        // include data referred by user key
+        query.include(Post.KEY_OWNER);
+        query.setLimit(20);
+        query.addDescendingOrder("createdAt");
+        // start an asynchronous call for posts
+        query.findInBackground((posts, e) -> {
+            // check for errors
+            if (e != null) {
+                Log.e(TAG, "Issue with getting posts", e);
+                return;
+            }
+
+
+            allPosts.addAll(posts);
+            adapter.notifyDataSetChanged();
+        });
     }
 }

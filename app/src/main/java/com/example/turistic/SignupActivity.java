@@ -60,7 +60,7 @@ public class SignupActivity extends AppCompatActivity {
             newUser.put(KEY_LAST_NAME, lastName);
             newUser.signUpInBackground(e -> {
                 if(e == null){
-                    Intent i = new Intent(SignupActivity.this, FeedActivity.class);
+                    Intent i = new Intent(SignupActivity.this, MainActivity.class);
                     startActivity(i);
                 } else {
                     Log.e(TAG, "Error with signing up" + e);
