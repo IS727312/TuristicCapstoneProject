@@ -2,7 +2,9 @@ package com.example.turistic.fragments;
 
 import static android.app.Activity.RESULT_OK;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -52,6 +54,7 @@ public class ComposeFragment extends Fragment {
     public static final int PICTURE_TAKEN = 0;
     public static final int PICTURE_SUBMITTED = 0;
     private int pictureOrigin;
+    String selectedImagePath;
 
     public ComposeFragment() {
         // Required empty public constructor
@@ -80,8 +83,6 @@ public class ComposeFragment extends Fragment {
         btnComposeSubmitPost.setOnClickListener(v -> {
             String caption = etComposeCaption.getText().toString();
             String title = etComposeTitle.getText().toString();
-            Log.i(TAG, caption);
-            Log.i(TAG, title);
             if(caption.isEmpty() || title.isEmpty()){
                 Toast.makeText(getContext(), "Empty fields", Toast.LENGTH_SHORT).show();
                 return;
@@ -89,13 +90,14 @@ public class ComposeFragment extends Fragment {
             if(photoFile == null || ivComposePictureToPost.getDrawable() == null){
                 Toast.makeText(getContext(), "There is no photo", Toast.LENGTH_SHORT).show();
             }
+            Log.i(TAG, "PHOTOFILE" + photoFile.toString());
             ParseUser currentUser = ParseUser.getCurrentUser();
             savePosts(caption, title, currentUser, photoFile);
             Intent i = new Intent(getContext(), MainActivity.class);
             startActivity(i);
         });
 
-        btnComposeSubmitPicture.setOnClickListener(v -> Log.i(TAG, "Upload pictures"));
+        btnComposeSubmitPicture.setOnClickListener(v -> imageChooser());
     }
 
     private void savePosts(String caption, String title, ParseUser currentUser, File photoFile) {
@@ -149,7 +151,7 @@ public class ComposeFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE || requestCode == SELECT_PICTURE) {
+        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // by this point we have the camera photo on disk
                 Bitmap takenImage = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
@@ -201,9 +203,12 @@ public class ComposeFragment extends Fragment {
             if (resultCode == RESULT_OK) {
                 // Get the url of the image from data
                 Uri selectedImageUri = data.getData();
+                selectedImagePath = getPath(selectedImageUri);
+                photoFile = getPhotoFileUri(selectedImagePath);
                 if (null != selectedImageUri) {
                     // update the preview image in the layout
                     pictureOrigin = PICTURE_SUBMITTED;
+                    Log.i(TAG, selectedImageUri.toString());
                     ivComposePictureToPost.setImageURI(selectedImageUri);
                 }
             }
@@ -214,12 +219,29 @@ public class ComposeFragment extends Fragment {
 
         // create an instance of the
         // intent of the type image
-        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-        i.setType("image/*");
+        Intent intent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select File"),
+                SELECT_PICTURE);
 
-        // pass the constant to compare it
-        // with the returned requestCode
-        startActivityForResult(i, SELECT_PICTURE);
+    }
+
+    public String getPath(Uri uri, Activity activity) {
+        String[] projection = { MediaStore.MediaColumns.DATA };
+        Cursor cursor = activity
+                .managedQuery(uri, projection, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
+    public String getPath(Uri uri) {
+        String[] projection = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getActivity().managedQuery(uri, projection, null, null, null);
+        int column_index = cursor
+                .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
     }
 
 }
