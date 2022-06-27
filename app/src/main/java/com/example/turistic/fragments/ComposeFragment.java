@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 
 
 public class ComposeFragment extends Fragment {
@@ -201,10 +200,13 @@ public class ComposeFragment extends Fragment {
         }
         if (requestCode == SELECT_PICTURE) {
             if (resultCode == RESULT_OK) {
+
                 // Get the url of the image from data
                 Uri selectedImageUri = data.getData();
                 selectedImagePath = getPath(selectedImageUri);
                 photoFile = getPhotoFileUri(selectedImagePath);
+
+                //Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), photoFile);
                 if (null != selectedImageUri) {
                     // update the preview image in the layout
                     pictureOrigin = PICTURE_SUBMITTED;
