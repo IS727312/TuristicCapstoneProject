@@ -29,6 +29,7 @@ public class Post extends ParseObject {
     public void setTitle(String title) {put(KEY_TITLE, title); }
     public int getLikes() {return getInt(KEY_LIKES); }
     public void increaseLikes() {put(KEY_LIKES, getLikes() + 1);}
+    public void decreaseLikes() {put(KEY_LIKES, getLikes() - 1);}
 
     public String getRelativeTimeAgo(Date createdAt) {
         final int SECOND_MILLIS = 1000;
