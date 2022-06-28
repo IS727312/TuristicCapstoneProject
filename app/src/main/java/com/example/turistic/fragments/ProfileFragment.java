@@ -23,12 +23,16 @@ import com.parse.ParseFile;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
     public static final String TAG = "ProfileFragment";
+    private ParseUser user;
+    private JSONArray followers, following;
     protected PostAdapter adapter;
     protected List<Post> userPosts;
 
@@ -42,10 +46,14 @@ public class ProfileFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        user = ParseUser.getCurrentUser();
+        followers = user.getJSONArray("followers");
+        following = user.getJSONArray("following");
         ParseFile profilePicture = ParseUser.getCurrentUser().getParseFile("profilePicture");
         RecyclerView rvProfilePosts = view.findViewById(R.id.rvProfilePosts);
 
@@ -53,6 +61,8 @@ public class ProfileFragment extends Fragment {
         TextView tvProfileFollowers = view.findViewById(R.id.tvProfileFollowers);
         TextView tvProfileFollowing = view.findViewById(R.id.tvProfileFollowing);
         TextView tvProfileUsername = view.findViewById(R.id.tvProfileUsername);
+        int totalFollowers;
+        int totalFollowing;
 
         userPosts = new ArrayList<>();
         adapter = new PostAdapter(getContext(), userPosts);
@@ -66,10 +76,20 @@ public class ProfileFragment extends Fragment {
         Glide.with(requireContext())
                 .load(profilePicture.getUrl())
                 .into(ivProfileProfilePicture);
+        if(followers == null){
+            totalFollowers = 0;
+        }else{
+            totalFollowers = followers.length();
+        }
 
-        tvProfileFollowing.setText("Following: 0");
-        tvProfileFollowers.setText("Followers: 0");
-        tvProfileUsername.setText(ParseUser.getCurrentUser().getUsername());
+        if(following == null){
+            totalFollowing = 0;
+        }else{
+            totalFollowing = following.length();
+        }
+        tvProfileFollowing.setText(String.format("Followers: %d", totalFollowing));
+        tvProfileFollowers.setText(String.format("Following: %d", totalFollowers));
+        tvProfileUsername.setText(user.getUsername());
 
     }
 
@@ -82,7 +102,7 @@ public class ProfileFragment extends Fragment {
         query.addDescendingOrder("createdAt");
         query.findInBackground((objects, e) -> {
             for(Post post: objects){
-                if(ParseUser.getCurrentUser().getObjectId().equals(post.getOwner().getObjectId())){
+                if(user.getObjectId().equals(post.getOwner().getObjectId())){
                     userPosts.add(post);
                 }
             }

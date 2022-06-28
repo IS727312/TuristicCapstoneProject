@@ -1,6 +1,11 @@
 package com.example.turistic.fragments;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +15,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -21,6 +27,8 @@ import com.parse.ParseQuery;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import SwipeGestures.SwipeGestureManager;
 
 public class FeedFragment extends Fragment {
 
@@ -58,6 +66,9 @@ public class FeedFragment extends Fragment {
             getPosts();
             srFeedFragment.setRefreshing(false);
         });
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvFeedFragment);
+
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -81,4 +92,23 @@ public class FeedFragment extends Fragment {
             adapter.notifyDataSetChanged();
         });
     }
+
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            Log.i(TAG, "SWIPED LEFT");
+            adapter.notifyItemChanged(viewHolder.getAdapterPosition());
+        }
+
+        @Override
+        public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
+        }
+    };
+
 }
