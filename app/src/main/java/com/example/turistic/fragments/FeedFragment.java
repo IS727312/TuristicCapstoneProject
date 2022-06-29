@@ -1,16 +1,13 @@
 package com.example.turistic.fragments;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.RectF;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,17 +20,20 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.turistic.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
+import com.parse.ParseException;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import SwipeGestures.SwipeGestureManager;
 
 public class FeedFragment extends Fragment {
 
     public static final String TAG = "FeedFragment";
     private SwipeRefreshLayout srFeedFragment;
+    private ParseUser currentUser;
     protected PostAdapter adapter;
     protected List<Post> allPosts;
 
@@ -55,6 +55,7 @@ public class FeedFragment extends Fragment {
 
         allPosts = new ArrayList<>();
         adapter = new PostAdapter(getContext(), allPosts);
+        currentUser = ParseUser.getCurrentUser();
 
         rvFeedFragment.setAdapter(adapter);
         rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -75,19 +76,15 @@ public class FeedFragment extends Fragment {
     private void getPosts() {
         // specify what type of data we want to query - Post.class
         ParseQuery<Post> query = ParseQuery.getQuery(Post.class);
-        // include data referred by user key
         query.include(Post.KEY_OWNER);
         query.setLimit(20);
         query.addDescendingOrder("createdAt");
         // start an asynchronous call for posts
         query.findInBackground((posts, e) -> {
-            // check for errors
             if (e != null) {
                 Log.e(TAG, "Issue with getting posts", e);
                 return;
             }
-
-
             allPosts.addAll(posts);
             adapter.notifyDataSetChanged();
         });
@@ -101,14 +98,53 @@ public class FeedFragment extends Fragment {
 
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-            Log.i(TAG, "SWIPED LEFT");
+            int position = viewHolder.getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                Post post = allPosts.get(position);
+                ParseUser postOwner = post.getOwner();
+
+                if(!postOwner.getObjectId().equals(currentUser.getObjectId())){
+                    if(!isAlreadyFollowed(post)){
+                        Toast.makeText(getContext(), "Following user"+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                        currentUser.add("following", postOwner);
+                        currentUser.saveInBackground(new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if(e != null){
+                                    Log.e(TAG,"Could not add user", e);
+                                    return;
+                                }
+                                Log.i(TAG, "Follower added successfully");
+                            }
+                        });
+                    }else {
+                        Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
+                    }
+                }else{
+                    Toast.makeText(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
+                }
+            }
             adapter.notifyItemChanged(viewHolder.getAdapterPosition());
         }
 
         @Override
         public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            //Limit the distance of the swipe
             super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
         }
     };
+
+    private boolean isAlreadyFollowed(Post post){
+        ParseUser postOwner = post.getOwner();
+        ArrayList<ParseUser> followingList = (ArrayList) currentUser.get("following");
+        if(followingList != null) {
+            for (ParseUser user : followingList) {
+                if (postOwner.getObjectId().equals(user.getObjectId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 }

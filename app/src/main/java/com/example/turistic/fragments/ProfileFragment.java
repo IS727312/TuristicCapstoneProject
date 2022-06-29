@@ -87,8 +87,8 @@ public class ProfileFragment extends Fragment {
         }else{
             totalFollowing = following.length();
         }
-        tvProfileFollowing.setText(String.format("Followers: %d", totalFollowing));
-        tvProfileFollowers.setText(String.format("Following: %d", totalFollowers));
+        tvProfileFollowing.setText(String.format("Following: %d", totalFollowing));
+        tvProfileFollowers.setText(String.format("Followers: %d", totalFollowers));
         tvProfileUsername.setText(user.getUsername());
 
     }
