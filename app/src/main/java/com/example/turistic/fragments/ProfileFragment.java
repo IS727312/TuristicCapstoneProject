@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.example.turistic.PostAdapter;
+import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
 import com.parse.ParseFile;

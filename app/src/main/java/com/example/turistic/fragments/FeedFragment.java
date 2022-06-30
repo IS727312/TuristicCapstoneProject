@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.example.turistic.PostAdapter;
+import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
 import com.parse.ParseException;
