@@ -108,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "FOLLOWING");
             ArrayList<ParseUser> currentUserFollowerList = (ArrayList) currentUser.get("followers");
             for(ParseUser user: allUsers){
-                Log.i(TAG, user.getUsername());
                 ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
                 if(userFollowingList != null){
                     for(int i = 0; i < userFollowingList.size(); i++){

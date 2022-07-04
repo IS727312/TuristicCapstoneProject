@@ -17,8 +17,10 @@ import android.view.MenuItem;
 import android.widget.EditText;
 
 import com.example.turistic.adapters.PostAdapter;
+import com.example.turistic.adapters.UserAdapter;
 import com.example.turistic.models.Post;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +29,11 @@ import java.util.Locale;
 public class SearchActivity extends AppCompatActivity {
     public static final String TAG = "SearchActivity";
     protected PostAdapter adapter;
+    protected UserAdapter userAdapter;
     protected List<Post> queryPosts;
+    protected List<ParseUser> queryUsers;
     private EditText etTitleToSearch;
+    private String searchQuery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,13 +41,19 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
 
         etTitleToSearch = findViewById(R.id.etTitleToSearch);
-        RecyclerView rvSearch = findViewById(R.id.rvSearch);
+        RecyclerView rvSearchPosts = findViewById(R.id.rvSearchPosts);
+        RecyclerView rvSearchUsers = findViewById(R.id.rvSearchUsers);
 
         queryPosts = new ArrayList<>();
+        queryUsers = new ArrayList<>();
         adapter = new PostAdapter(this, queryPosts);
+        userAdapter = new UserAdapter(this, queryUsers);
 
-        rvSearch.setAdapter(adapter);
-        rvSearch.setLayoutManager(new LinearLayoutManager(this));
+        rvSearchPosts.setAdapter(adapter);
+        rvSearchPosts.setLayoutManager(new LinearLayoutManager(this));
+
+        rvSearchUsers.setAdapter(userAdapter);
+        rvSearchUsers.setLayoutManager(new LinearLayoutManager(this));
 
         etTitleToSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -52,12 +63,15 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchQuery = etTitleToSearch.getText().toString().toLowerCase(Locale.ROOT);
                 getPosts();
+                getUsers();
             }
 
             @Override
             public void afterTextChanged(Editable s) {
                 queryPosts.clear();
+                queryUsers.clear();
             }
         });
 
@@ -71,8 +85,6 @@ public class SearchActivity extends AppCompatActivity {
         query.include(Post.KEY_OWNER);
         query.setLimit(20);
         query.addDescendingOrder("createdAt");
-        // start an asynchronous call for posts
-
         query.findInBackground((posts, e) -> {
             // check for errors
             if (e != null) {
@@ -80,11 +92,33 @@ public class SearchActivity extends AppCompatActivity {
                 return;
             }
             for(Post post: posts){
-                if(post.getTitle().toLowerCase(Locale.ROOT).equals(etTitleToSearch.getText().toString().toLowerCase(Locale.ROOT))){
+                if(post.getTitle().toLowerCase(Locale.ROOT).equals(searchQuery)){
                     queryPosts.add(post);
+                    Log.i(TAG, "" + queryPosts.size());
                 }
             }
             adapter.notifyDataSetChanged();
+        });
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void getUsers(){
+        ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
+        query.setLimit(20);
+        query.addDescendingOrder("createdAt");
+        query.findInBackground((objects, e) -> {
+            if(e != null){
+                Log.e(TAG, "Issues with retrieving users");
+                return;
+            }
+            Log.i(TAG, "GETUSERS()");
+            Log.i(TAG, searchQuery);
+            for(ParseUser parseUser: objects){
+                if(parseUser.getUsername().toLowerCase(Locale.ROOT).equals(searchQuery) ){
+                    queryUsers.add(parseUser);
+                }
+            }
+            userAdapter.notifyDataSetChanged();
         });
     }
 

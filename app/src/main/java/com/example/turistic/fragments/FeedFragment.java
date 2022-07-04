@@ -19,15 +19,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
+import com.example.turistic.adapters.UserAdapter;
 import com.example.turistic.models.Post;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class FeedFragment extends Fragment {
 
@@ -35,6 +33,8 @@ public class FeedFragment extends Fragment {
     private SwipeRefreshLayout srFeedFragment;
     private ParseUser currentUser;
     protected PostAdapter adapter;
+    protected UserAdapter userAdapter;
+    protected List<ParseUser> allUsers;
     protected List<Post> allPosts;
 
     public FeedFragment(){
@@ -54,6 +54,8 @@ public class FeedFragment extends Fragment {
         srFeedFragment = view.findViewById(R.id.srFeedFragment);
 
         allPosts = new ArrayList<>();
+        allUsers = new ArrayList<>();
+        userAdapter = new UserAdapter(getContext(), allUsers);
         adapter = new PostAdapter(getContext(), allPosts);
         currentUser = ParseUser.getCurrentUser();
 
@@ -61,7 +63,6 @@ public class FeedFragment extends Fragment {
         rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getPosts();
-
         srFeedFragment.setOnRefreshListener(() -> {
             allPosts.clear();
             getPosts();
@@ -107,15 +108,12 @@ public class FeedFragment extends Fragment {
                     if(!isAlreadyFollowed(post)){
                         Toast.makeText(getContext(), "Following user"+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
                         currentUser.add("following", postOwner);
-                        currentUser.saveInBackground(new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e != null){
-                                    Log.e(TAG,"Could not add user", e);
-                                    return;
-                                }
-                                Log.i(TAG, "Follower added successfully");
+                        currentUser.saveInBackground(e -> {
+                            if(e != null){
+                                Log.e(TAG,"Could not add user", e);
+                                return;
                             }
+                            Log.i(TAG, "Follower added successfully");
                         });
                     }else {
                         Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();

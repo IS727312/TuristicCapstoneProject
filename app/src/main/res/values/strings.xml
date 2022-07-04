@@ -26,4 +26,12 @@
     <string name="user_profile_picture">User profile picture</string>
     <string name="post_of_the_picture">Post of the Picture</string>
     <string name="example_caption">Example Caption</string>
+    <string name="save">Save</string>
+    <string name="privacy_mode">Privacy Mode:</string>
+    <string-array name="privacyMode">
+        <item>Public</item>
+        <item>Followers Only</item>
+        <item>Friends Only</item>
+        <item>Private</item>
+    </string-array>
 </resources>

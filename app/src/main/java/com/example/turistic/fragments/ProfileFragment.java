@@ -1,6 +1,7 @@
 package com.example.turistic.fragments;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,10 +13,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.turistic.EditActivity;
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
@@ -61,6 +64,7 @@ public class ProfileFragment extends Fragment {
         TextView tvProfileFollowers = view.findViewById(R.id.tvProfileFollowers);
         TextView tvProfileFollowing = view.findViewById(R.id.tvProfileFollowing);
         TextView tvProfileUsername = view.findViewById(R.id.tvProfileUsername);
+        ImageButton iBtnEdit = view.findViewById(R.id.iBtnEdit);
         int totalFollowers;
         int totalFollowing;
 
@@ -91,6 +95,10 @@ public class ProfileFragment extends Fragment {
         tvProfileFollowers.setText(String.format("Followers: %d", totalFollowers));
         tvProfileUsername.setText(user.getUsername());
 
+        iBtnEdit.setOnClickListener(v -> {
+            Intent i = new Intent(getActivity(), EditActivity.class);
+            startActivity(i);
+        });
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -108,7 +116,5 @@ public class ProfileFragment extends Fragment {
             }
             adapter.notifyDataSetChanged();
         });
-
-
     }
 }
