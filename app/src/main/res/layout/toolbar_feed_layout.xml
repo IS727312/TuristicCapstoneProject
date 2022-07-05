@@ -21,8 +21,8 @@
         android:layout_height="50dp"
         android:layout_weight="1"
         android:contentDescription="@string/logo"
-        app:srcCompat="@mipmap/instagram_logo_foreground"
-        tools:srcCompat="@mipmap/instagram_logo_foreground" />
+        app:srcCompat="@drawable/logo"
+        tools:srcCompat="@drawable/logo" />
 
     <ImageButton
         android:id="@+id/btnFeedLogOut"

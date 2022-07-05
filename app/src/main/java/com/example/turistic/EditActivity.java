@@ -100,6 +100,7 @@ public class EditActivity extends AppCompatActivity {
             if(photoChanged){
                 user.put("profilePicture",new ParseFile(photoFile));
             }
+            user.put("profileMode", spnValue);
             user.saveInBackground(e -> {
                 if(e != null){
                     Log.e(TAG, "Issue with updating data");
