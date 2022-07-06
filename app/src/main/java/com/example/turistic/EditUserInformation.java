@@ -28,7 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class EditActivity extends AppCompatActivity {
+public class EditUserInformation extends AppCompatActivity {
 
     public static final String sTAG = "EditActivity";
     public static final int sSELECT_PICTURE_REQUEST_CODE = 200;
@@ -47,7 +47,7 @@ public class EditActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_edit);
+        setContentView(R.layout.activity_edit_user_information);
 
         mEtEditUsername = findViewById(R.id.etEditUsername);
         mEtEditName = findViewById(R.id.etEditName);
@@ -99,15 +99,15 @@ public class EditActivity extends AppCompatActivity {
                 mUser.put("profilePicture",new ParseFile(mPhotoFile));
             }
             if(mPrivacyModeValue == -1){
-                Toast.makeText(EditActivity.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditUserInformation.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
             }else {
                 mUser.put("profileMode", mPrivacyModeValue);
                 mUser.saveInBackground(e -> {
                     if (e != null) {
                         Log.e(sTAG, "Issue with updating data");
                     }
-                    Toast.makeText(EditActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
-                    Intent i = new Intent(EditActivity.this, MainActivity.class);
+                    Toast.makeText(EditUserInformation.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent(EditUserInformation.this, MainActivity.class);
                     startActivity(i);
                 });
             }
@@ -122,7 +122,7 @@ public class EditActivity extends AppCompatActivity {
         mEtEditLastName.setHint(mUser.getString("lastName"));
         mEtEditUsername.setHint(mUser.getUsername());
         assert profilePicture != null;
-        Glide.with(EditActivity.this).load(profilePicture.getUrl()).into(mIvEditProfilePicture);
+        Glide.with(EditUserInformation.this).load(profilePicture.getUrl()).into(mIvEditProfilePicture);
 
         mSpnPrivacyMode.setSelection(userPrivacyMode);
     }
@@ -140,7 +140,7 @@ public class EditActivity extends AppCompatActivity {
         try {
             // check version of Android on device
             // on newer versions of Android, use the new decodeBitmap method
-            ImageDecoder.Source source = ImageDecoder.createSource(EditActivity.this.getContentResolver(), photoUri);
+            ImageDecoder.Source source = ImageDecoder.createSource(EditUserInformation.this.getContentResolver(), photoUri);
             image = ImageDecoder.decodeBitmap(source);
         } catch (IOException e) {
             e.printStackTrace();
@@ -161,7 +161,7 @@ public class EditActivity extends AppCompatActivity {
                 Bitmap selectedImage = loadFromUri(photoUri);
 
                 //create a file to write bitmap data
-                File f = new File(EditActivity.this.getCacheDir(), mPhotoFileName);
+                File f = new File(EditUserInformation.this.getCacheDir(), mPhotoFileName);
                 try {
                     f.createNewFile();
                 } catch (IOException e) {

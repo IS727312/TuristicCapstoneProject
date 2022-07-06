@@ -120,7 +120,6 @@ public class ComposeFragment extends Fragment {
     }
 
     public void onPickPhoto(View view) {
-        // Create intent for picking a photo from the gallery
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, sSELECT_PICTURE_REQUEST_CODE);
@@ -131,8 +130,6 @@ public class ComposeFragment extends Fragment {
     public Bitmap loadFromUri(Uri photoUri) {
         Bitmap image = null;
         try {
-            // check version of Android on device
-            // on newer versions of Android, use the new decodeBitmap method
             ImageDecoder.Source source = ImageDecoder.createSource(getContext().getContentResolver(), photoUri);
             image = ImageDecoder.decodeBitmap(source);
         } catch (IOException e) {
@@ -170,7 +167,6 @@ public class ComposeFragment extends Fragment {
         if (requestCode == sCAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Bitmap takenImage = rotateBitmapOrientation(mPhotoFile.getAbsolutePath());
-                // RESIZE BITMAP, see section below
                 Uri takenPhotoUri = Uri.fromFile(getPhotoFileUri(mPhotoFileName));
                 // by this point we have the camera photo on disk
                 Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
@@ -205,26 +201,17 @@ public class ComposeFragment extends Fragment {
         }
         if (requestCode == sSELECT_PICTURE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-
                 Uri photoUri = data.getData();
-
-                // Load the image located at photoUri into selectedImage
                 Bitmap selectedImage = loadFromUri(photoUri);
-
-                //create a file to write bitmap data
                 File f = new File(getContext().getCacheDir(), mPhotoFileName);
                 try {
                     f.createNewFile();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                //Convert bitmap to byte array
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 selectedImage.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
                 byte[] bitmapdata = bos.toByteArray();
-
-                //write the bytes in file
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(f);
@@ -236,17 +223,18 @@ public class ComposeFragment extends Fragment {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
                 mPhotoFile = f;
-
                 mIvComposePictureToPost.setImageBitmap(selectedImage);
             }
         }
     }
 
     public Bitmap rotateBitmapOrientation(String photoFilePath) {
-        // Create and configure BitmapFactory
+        // Create two BitmapFactory.Options Bounds and opts
+        // bounds will help to limit the bounds of the return Bitmap.createBitmap
+        //opt is used to create a bitmap from the photoFilePath
         BitmapFactory.Options bounds = new BitmapFactory.Options();
+        //inJustDecodeBounds is true so the .decodeFile does not return a Bitmap
         bounds.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(photoFilePath, bounds);
         BitmapFactory.Options opts = new BitmapFactory.Options();

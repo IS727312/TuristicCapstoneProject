@@ -39,6 +39,7 @@ public class SearchActivity extends AppCompatActivity {
     private EditText mEtTitleToSearch;
     private String mSearchQuery;
     private ParseUser mCurrentUser;
+    private  int mUserPrivacyMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,8 +103,21 @@ public class SearchActivity extends AppCompatActivity {
             }
             for(Post post: posts){
                 if(post.getTitle().toLowerCase(Locale.ROOT).equals(mSearchQuery)){
-                    mQueryPosts.add(post);
-                    Log.i(sTAG, "" + mQueryPosts.size());
+                    mUserPrivacyMode = post.getOwner().getInt("profileMode");
+                    switch (mUserPrivacyMode){
+                        case 0:
+                            onUserIsPublic(post);
+                            break;
+                        case 1:
+                            onUserIsFollowersOnly(post);
+                            break;
+                        case 2:
+                            onUserIsFriendsOnly(post);
+                            break;
+                        case 3: default:
+                            onUserIsPrivate();
+                            break;
+                    }
                 }
             }
             mAdapter.notifyDataSetChanged();
@@ -122,7 +136,21 @@ public class SearchActivity extends AppCompatActivity {
             }
             for(ParseUser parseUser: objects){
                 if(parseUser.getUsername().toLowerCase(Locale.ROOT).equals(mSearchQuery) ){
-                    mQueryUsers.add(parseUser);
+                    mUserPrivacyMode = parseUser.getInt("profileMode");
+                    switch (mUserPrivacyMode){
+                        case 0:
+                            onUserIsPublic(parseUser);
+                            break;
+                        case 1:
+                            onUserIsFollowersOnly(parseUser);
+                            break;
+                        case 2:
+                            onUserIsFriendsOnly(parseUser);
+                            break;
+                        case 3: default:
+                            onUserIsPrivate();
+                            break;
+                    }
                 }
             }
             mUserAdapter.notifyDataSetChanged();
@@ -207,6 +235,66 @@ public class SearchActivity extends AppCompatActivity {
         if(followingList != null) {
             for (ParseUser user : followingList) {
                 if (postOwner.getObjectId().equals(user.getObjectId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void onUserIsPrivate() {
+        Log.i(sTAG, "PRIVATE");
+    }
+
+    private void onUserIsFriendsOnly(Post post) {
+        if(isFollowing(post.getOwner()) && isFollowedBy(post.getOwner())){
+            mQueryPosts.add(post);
+        }
+    }
+
+    private void onUserIsFriendsOnly(ParseUser user) {
+        if(isFollowing(user) && isFollowedBy(user)){
+            mQueryUsers.add(user);
+        }
+    }
+
+    private void onUserIsFollowersOnly(Post post) {
+        if(isFollowing(post.getOwner())){
+            mQueryPosts.add(post);
+        }
+    }
+
+    private void onUserIsFollowersOnly(ParseUser user) {
+        if(isFollowing(user)){
+            mQueryUsers.add(user);
+        }
+    }
+
+    private void onUserIsPublic(Post post) {
+        mQueryPosts.add(post);
+    }
+
+    private void onUserIsPublic(ParseUser user) {
+        mQueryUsers.add(user);
+    }
+
+    private boolean isFollowedBy(ParseUser owner) {
+        ArrayList<ParseUser> postOwnerFollowingList = (ArrayList) owner.get("following");
+        if(postOwnerFollowingList != null){
+            for(ParseUser user: postOwnerFollowingList){
+                if(mCurrentUser.getObjectId().equals(user.getObjectId())){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isFollowing(ParseUser owner) {
+        ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
+        if(followingList != null){
+            for(ParseUser user: followingList){
+                if(user.getObjectId().equals(owner.getObjectId())){
                     return true;
                 }
             }
