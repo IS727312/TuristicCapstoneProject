@@ -19,68 +19,66 @@ import com.parse.ParseFile;
 import java.util.List;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
-    public static final String TAG = "PostAdapter";
-    private Context context;
-    private List<Post> posts;
+    public static final String sTAG = "PostAdapter";
+    private Context mContext;
+    private List<Post> mPosts;
 
     public PostAdapter(Context context, List<Post> posts){
-        this.context = context;
-        this.posts = posts;
+        this.mContext = context;
+        this.mPosts = posts;
     }
 
     @NonNull
     @Override
     public PostAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_post, parent, false);
+        View view = LayoutInflater.from(mContext).inflate(R.layout.item_post, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Post post = posts.get(position);
+        Post post = mPosts.get(position);
         holder.bind(post);
     }
 
     @Override
     public int getItemCount() {
-        return posts.size();
+        return mPosts.size();
     }
 
     class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private ImageView ivProfilePicture;
-        private ImageView ivPostPicture;
-        private TextView tvUsername;
-        private TextView tvCaption;
-        private TextView tvTitle;
+        private ImageView mIvProfilePicture;
+        private ImageView mIvPostPicture;
+        private TextView mTvUsername;
+        private TextView mTvTitle;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvCaption = itemView.findViewById(R.id.tvCaption);
-            tvUsername = itemView.findViewById(R.id.tvUsername);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            ivPostPicture = itemView.findViewById(R.id.ivPostPicture);
-            ivProfilePicture = itemView.findViewById(R.id.ivProfilePicture);
+            mTvUsername = itemView.findViewById(R.id.tvUsername);
+            mTvTitle = itemView.findViewById(R.id.tvTitle);
+            mIvPostPicture = itemView.findViewById(R.id.ivPostPicture);
+            mIvProfilePicture = itemView.findViewById(R.id.ivProfilePicture);
             itemView.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            Log.i(TAG, "Post Clicked");
+            Log.i(sTAG, "Post Clicked");
         }
 
 
         public void bind(Post post) {
-            tvCaption.setText(post.getCaption());
-            tvTitle.setText(post.getTitle());
-            tvUsername.setText(post.getOwner().getUsername());
+            //tvCaption.setText(post.getCaption());
+            mTvTitle.setText(post.getTitle());
+            mTvUsername.setText(post.getOwner().getUsername());
             ParseFile postImage = post.getPicture();
             ParseFile profileImage = post.getOwner().getParseFile("profilePicture");
             if(postImage != null){
-                Glide.with(context).load(postImage.getUrl()).into(ivPostPicture);
+                Glide.with(mContext).load(postImage.getUrl()).into(mIvPostPicture);
             }
             if(profileImage != null){
-                Glide.with(context).load(profileImage.getUrl()).into(ivProfilePicture);
+                Glide.with(mContext).load(profileImage.getUrl()).into(mIvProfilePicture);
             }
         }
     }

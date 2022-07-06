@@ -29,13 +29,14 @@ import java.util.List;
 
 public class FeedFragment extends Fragment {
 
-    public static final String TAG = "FeedFragment";
-    private SwipeRefreshLayout srFeedFragment;
-    private ParseUser currentUser;
-    protected PostAdapter adapter;
-    protected UserAdapter userAdapter;
-    protected List<ParseUser> allUsers;
-    protected List<Post> allPosts;
+    public static final String sTAG = "FeedFragment";
+    private SwipeRefreshLayout mSrFeedFragment;
+    private ParseUser mCurrentUser;
+    private  int mUserPrivacyMode;
+    private PostAdapter mAdapter;
+    private UserAdapter mUserAdapter;
+    private List<ParseUser> mAllUsers;
+    private List<Post> mAllPosts;
 
     public FeedFragment(){
         // Required empty public constructor
@@ -51,22 +52,22 @@ public class FeedFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RecyclerView rvFeedFragment = view.findViewById(R.id.rvFeedFragment);
-        srFeedFragment = view.findViewById(R.id.srFeedFragment);
+        mSrFeedFragment = view.findViewById(R.id.srFeedFragment);
 
-        allPosts = new ArrayList<>();
-        allUsers = new ArrayList<>();
-        userAdapter = new UserAdapter(getContext(), allUsers);
-        adapter = new PostAdapter(getContext(), allPosts);
-        currentUser = ParseUser.getCurrentUser();
+        mAllPosts = new ArrayList<>();
+        mAllUsers = new ArrayList<>();
+        mUserAdapter = new UserAdapter(getContext(), mAllUsers);
+        mAdapter = new PostAdapter(getContext(), mAllPosts);
+        mCurrentUser = ParseUser.getCurrentUser();
 
-        rvFeedFragment.setAdapter(adapter);
+        rvFeedFragment.setAdapter(mAdapter);
         rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getPosts();
-        srFeedFragment.setOnRefreshListener(() -> {
-            allPosts.clear();
+        mSrFeedFragment.setOnRefreshListener(() -> {
+            mAllPosts.clear();
             getPosts();
-            srFeedFragment.setRefreshing(false);
+            mSrFeedFragment.setRefreshing(false);
         });
 
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvFeedFragment);
@@ -75,20 +76,82 @@ public class FeedFragment extends Fragment {
 
     @SuppressLint("NotifyDataSetChanged")
     private void getPosts() {
+
         // specify what type of data we want to query - Post.class
         ParseQuery<Post> query = ParseQuery.getQuery(Post.class);
-        query.include(Post.KEY_OWNER);
+        query.include(Post.sKEY_OWNER);
         query.setLimit(20);
         query.addDescendingOrder("createdAt");
         // start an asynchronous call for posts
         query.findInBackground((posts, e) -> {
             if (e != null) {
-                Log.e(TAG, "Issue with getting posts", e);
+                Log.e(sTAG, "Issue with getting posts", e);
                 return;
             }
-            allPosts.addAll(posts);
-            adapter.notifyDataSetChanged();
+            for (Post post: posts){
+                mUserPrivacyMode = post.getOwner().getInt("profileMode");
+                switch (mUserPrivacyMode){
+                    case 0:
+                        onUserIsPublic(post);
+                        break;
+                    case 1:
+                        onUserIsFollowersOnly(post);
+                        break;
+                    case 2:
+                        onUserIsFriendsOnly(post);
+                        break;
+                    case 3: default:
+                        onUserIsPrivate();
+                        break;
+                }
+            }
+            mAdapter.notifyDataSetChanged();
         });
+    }
+
+    private void onUserIsPrivate() {
+        Log.i(sTAG, "PRIVATE");
+    }
+
+    private void onUserIsFriendsOnly(Post post) {
+        if(isFollowing(post.getOwner()) && isFollowedBy(post.getOwner())){
+            Log.i(sTAG, "YES");
+            mAllPosts.add(post);
+        }
+    }
+
+    private void onUserIsFollowersOnly(Post post) {
+       if(isFollowing(post.getOwner())){
+           mAllPosts.add(post);
+       }
+    }
+
+    private void onUserIsPublic(Post post) {
+        mAllPosts.add(post);
+    }
+
+    private boolean isFollowedBy(ParseUser owner) {
+        ArrayList<ParseUser> postOwnerFollowingList = (ArrayList) owner.get("following");
+            if(postOwnerFollowingList != null){
+                for(ParseUser user: postOwnerFollowingList){
+                    if(mCurrentUser.getObjectId().equals(user.getObjectId())){
+                        return true;
+                    }
+                }
+            }
+        return false;
+    }
+
+    private boolean isFollowing(ParseUser owner) {
+        ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
+        if(followingList != null){
+            for(ParseUser user: followingList){
+                if(user.getObjectId().equals(owner.getObjectId())){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
@@ -101,19 +164,19 @@ public class FeedFragment extends Fragment {
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
             int position = viewHolder.getAdapterPosition();
             if(position != RecyclerView.NO_POSITION){
-                Post post = allPosts.get(position);
+                Post post = mAllPosts.get(position);
                 ParseUser postOwner = post.getOwner();
 
-                if(!postOwner.getObjectId().equals(currentUser.getObjectId())){
+                if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
                     if(!isAlreadyFollowed(post)){
-                        Toast.makeText(getContext(), "Following user"+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
-                        currentUser.add("following", postOwner);
-                        currentUser.saveInBackground(e -> {
+                        Toast.makeText(getContext(), "Following user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                        mCurrentUser.add("following", postOwner);
+                        mCurrentUser.saveInBackground(e -> {
                             if(e != null){
-                                Log.e(TAG,"Could not add user", e);
+                                Log.e(sTAG,"Could not add user", e);
                                 return;
                             }
-                            Log.i(TAG, "Follower added successfully");
+                            Log.i(sTAG, "Follower added successfully");
                         });
                     }else {
                         Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
@@ -122,7 +185,7 @@ public class FeedFragment extends Fragment {
                     Toast.makeText(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
                 }
             }
-            adapter.notifyItemChanged(viewHolder.getAdapterPosition());
+            mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
         }
 
         @Override
@@ -134,7 +197,7 @@ public class FeedFragment extends Fragment {
 
     private boolean isAlreadyFollowed(Post post){
         ParseUser postOwner = post.getOwner();
-        ArrayList<ParseUser> followingList = (ArrayList) currentUser.get("following");
+        ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
         if(followingList != null) {
             for (ParseUser user : followingList) {
                 if (postOwner.getObjectId().equals(user.getObjectId())) {
@@ -144,5 +207,4 @@ public class FeedFragment extends Fragment {
         }
         return false;
     }
-
 }

@@ -30,11 +30,11 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TAG = "FeedActivity";
-    final FragmentManager fragmentManager = getSupportFragmentManager();
-    private FrameLayout frameLayout;
-    private List<ParseUser> allUsers;
-    private ParseUser currentUser;
+    public static final String sTAG = "FeedActivity";
+    final FragmentManager mFragmentManager = getSupportFragmentManager();
+    private FrameLayout mFrameLayout;
+    private List<ParseUser> mAllUsers;
+    private ParseUser mCurrentUser;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -45,17 +45,17 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        allUsers = new ArrayList<>();
-        currentUser = ParseUser.getCurrentUser();
+        mAllUsers = new ArrayList<>();
+        mCurrentUser = ParseUser.getCurrentUser();
 
-        frameLayout = findViewById(R.id.flMainActivity);
+        mFrameLayout = findViewById(R.id.flMainActivity);
         ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
         btnFeedLogOut.setOnClickListener(v -> ParseUser.logOutInBackground(e -> {
             if (e != null){
-                Log.e(TAG, "Issue with Logging Out: " + e);
+                Log.e(sTAG, "Issue with Logging Out: " + e);
                 return;
             }
             ParseUser currentUser = ParseUser.getCurrentUser();
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                     fragment = new FeedFragment();
                     break;
             }
-            fragmentManager.beginTransaction().replace(R.id.flMainActivity, fragment).commit();
+            mFragmentManager.beginTransaction().replace(R.id.flMainActivity, fragment).commit();
             return true;
         });
         try {
@@ -101,20 +101,19 @@ public class MainActivity extends AppCompatActivity {
         query.addDescendingOrder("createdAt");
         query.findInBackground((objects, e) -> {
             if (e != null) {
-                Log.e(TAG, "Issue with getting users", e);
+                Log.e(sTAG, "Issue with getting users", e);
                 return;
             }
-            allUsers.addAll(objects);
-            Log.i(TAG, "FOLLOWING");
-            ArrayList<ParseUser> currentUserFollowerList = (ArrayList) currentUser.get("followers");
-            for(ParseUser user: allUsers){
+            mAllUsers.addAll(objects);
+            ArrayList<ParseUser> currentUserFollowerList = (ArrayList) mCurrentUser.get("followers");
+            for(ParseUser user: mAllUsers){
                 ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
                 if(userFollowingList != null){
                     for(int i = 0; i < userFollowingList.size(); i++){
-                        if(userFollowingList.get(i).getObjectId().equals(currentUser.getObjectId()) &&
+                        if(userFollowingList.get(i).getObjectId().equals(mCurrentUser.getObjectId()) &&
                             !isAlreadyFollowed(user)){
-                            currentUser.add("followers", user);
-                            currentUser.saveInBackground();
+                            mCurrentUser.add("followers", user);
+                            mCurrentUser.saveInBackground();
                         }
                     }
                 }
@@ -124,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isAlreadyFollowed(ParseUser user){
-        ArrayList<ParseUser> followersList = (ArrayList) currentUser.get("followers");
+        ArrayList<ParseUser> followersList = (ArrayList) mCurrentUser.get("followers");
         if(followersList != null) {
             for (ParseUser follower : followersList) {
                 if (user.getObjectId().equals(follower.getObjectId())) {

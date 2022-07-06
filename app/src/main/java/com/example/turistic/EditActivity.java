@@ -5,11 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -21,10 +19,8 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -34,99 +30,108 @@ import java.io.IOException;
 
 public class EditActivity extends AppCompatActivity {
 
-    public static final String TAG = "EditActivity";
-    public static final int SELECT_PICTURE_REQUEST_CODE = 200;
-    private Spinner spnPrivacyMode;
-    private EditText etEditUsername;
-    private EditText etEditName;
-    private EditText etEditLastName;
-    private ImageView ivEditProfilePicture;
-    private String spnValue;
-    private int privacyModeValue;
-    public String photoFileName = "photo.jpg";
-    private File photoFile;
-    private ParseUser user;
-    private Boolean photoChanged = false;
+    public static final String sTAG = "EditActivity";
+    public static final int sSELECT_PICTURE_REQUEST_CODE = 200;
+    private Spinner mSpnPrivacyMode;
+    private EditText mEtEditUsername;
+    private EditText mEtEditName;
+    private EditText mEtEditLastName;
+    private ImageView mIvEditProfilePicture;
+    private String mSpnValue;
+    private int mPrivacyModeValue;
+    public String mPhotoFileName = "photo.jpg";
+    private File mPhotoFile;
+    private ParseUser mUser;
+    private Boolean mPhotoChanged = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        etEditUsername = findViewById(R.id.etEditUsername);
-        etEditName = findViewById(R.id.etEditName);
-        etEditLastName = findViewById(R.id.etEditLastName);
-        ivEditProfilePicture = findViewById(R.id.ivEditProfilePicture);
-        user = ParseUser.getCurrentUser();
+        mEtEditUsername = findViewById(R.id.etEditUsername);
+        mEtEditName = findViewById(R.id.etEditName);
+        mEtEditLastName = findViewById(R.id.etEditLastName);
+        mIvEditProfilePicture = findViewById(R.id.ivEditProfilePicture);
+        mUser = ParseUser.getCurrentUser();
         Button btnEditSave = findViewById(R.id.btnEditSave);
 
 
-        spnPrivacyMode = findViewById(R.id.spnEditPrivacyMode);
-        privacyModeValue = 0;
+        mSpnPrivacyMode = findViewById(R.id.spnEditPrivacyMode);
+        mPrivacyModeValue = 0;
 
         ArrayAdapter<CharSequence> adapter=ArrayAdapter.createFromResource(this, R.array.privacyMode, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        spnPrivacyMode.setAdapter(adapter);
+        mSpnPrivacyMode.setAdapter(adapter);
 
         setUserInfo();
 
-        ivEditProfilePicture.setOnClickListener(v -> {
+        mIvEditProfilePicture.setOnClickListener(v -> {
             onPickPhoto(v);
-            photoChanged = true;
+            mPhotoChanged = true;
         });
 
         btnEditSave.setOnClickListener(v -> {
-            spnValue = spnPrivacyMode.getSelectedItem().toString();
-            switch (spnValue){
-                case "Public":privacyModeValue = 0;
+            mSpnValue = mSpnPrivacyMode.getSelectedItem().toString();
+            switch (mSpnValue){
+                case "Choose a Privacy Mode":mPrivacyModeValue = -1;
                 break;
-                case "Followers Only": privacyModeValue = 1;
+                case "Public":mPrivacyModeValue = 0;
                 break;
-                case "Friends Only": privacyModeValue = 2;
+                case "Followers Only": mPrivacyModeValue = 1;
+                break;
+                case "Friends Only": mPrivacyModeValue = 2;
                 break;
                 case "Private":
-                default: privacyModeValue = 3;
+                default: mPrivacyModeValue = 3;
                     break;
             }
-            if(!etEditName.getText().toString().isEmpty()) {
-                user.put("name", etEditName.getText().toString());
+            if(!mEtEditName.getText().toString().isEmpty()) {
+                mUser.put("name", mEtEditName.getText().toString());
             }
-            if(!etEditLastName.getText().toString().isEmpty()){
-                user.put("lastName", etEditLastName.getText().toString());
+            if(!mEtEditLastName.getText().toString().isEmpty()){
+                mUser.put("lastName", mEtEditLastName.getText().toString());
             }
-            if(!etEditUsername.getText().toString().isEmpty()){
-                user.setUsername(etEditUsername.getText().toString());
+            if(!mEtEditUsername.getText().toString().isEmpty()){
+                mUser.setUsername(mEtEditUsername.getText().toString());
             }
-            if(photoChanged){
-                user.put("profilePicture",new ParseFile(photoFile));
+            if(mPhotoChanged){
+                mUser.put("profilePicture",new ParseFile(mPhotoFile));
             }
-            user.put("profileMode", spnValue);
-            user.saveInBackground(e -> {
-                if(e != null){
-                    Log.e(TAG, "Issue with updating data");
-                }
-                Toast.makeText(EditActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
-                Intent i = new Intent(EditActivity.this, MainActivity.class);
-                startActivity(i);
-            });
+            if(mPrivacyModeValue == -1){
+                Toast.makeText(EditActivity.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
+            }else {
+                mUser.put("profileMode", mPrivacyModeValue);
+                mUser.saveInBackground(e -> {
+                    if (e != null) {
+                        Log.e(sTAG, "Issue with updating data");
+                    }
+                    Toast.makeText(EditActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent(EditActivity.this, MainActivity.class);
+                    startActivity(i);
+                });
+            }
         });
     }
 
     private void setUserInfo(){
-        ParseFile profilePicture = user.getParseFile("profilePicture");
+        ParseFile profilePicture = mUser.getParseFile("profilePicture");
+        int userPrivacyMode =  mUser.getInt("profileMode");
 
-        etEditName.setHint(user.getString("name"));
-        etEditLastName.setHint(user.getString("lastName"));
-        etEditUsername.setHint(user.getUsername());
+        mEtEditName.setHint(mUser.getString("name"));
+        mEtEditLastName.setHint(mUser.getString("lastName"));
+        mEtEditUsername.setHint(mUser.getUsername());
         assert profilePicture != null;
-        Glide.with(EditActivity.this).load(profilePicture.getUrl()).into(ivEditProfilePicture);
+        Glide.with(EditActivity.this).load(profilePicture.getUrl()).into(mIvEditProfilePicture);
+
+        mSpnPrivacyMode.setSelection(userPrivacyMode);
     }
 
     public void onPickPhoto(View view) {
         // Create intent for picking a photo from the gallery
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, SELECT_PICTURE_REQUEST_CODE);
+        startActivityForResult(intent, sSELECT_PICTURE_REQUEST_CODE);
 
     }
 
@@ -146,7 +151,7 @@ public class EditActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SELECT_PICTURE_REQUEST_CODE) {
+        if (requestCode == sSELECT_PICTURE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
 
                 assert data != null;
@@ -156,7 +161,7 @@ public class EditActivity extends AppCompatActivity {
                 Bitmap selectedImage = loadFromUri(photoUri);
 
                 //create a file to write bitmap data
-                File f = new File(EditActivity.this.getCacheDir(), photoFileName);
+                File f = new File(EditActivity.this.getCacheDir(), mPhotoFileName);
                 try {
                     f.createNewFile();
                 } catch (IOException e) {
@@ -170,31 +175,21 @@ public class EditActivity extends AppCompatActivity {
 
                 //write the bytes in file
                 FileOutputStream fos = null;
+
                 try {
                     fos = new FileOutputStream(f);
+                    fos.write(bitmapdata);
+                    fos.flush();
+                    fos.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                }
-                try {
-                    assert fos != null;
-                    fos.write(bitmapdata);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    fos.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    fos.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                photoFile = f;
+                mPhotoFile = f;
 
-                ivEditProfilePicture.setImageBitmap(selectedImage);
+                mIvEditProfilePicture.setImageBitmap(selectedImage);
             }
         }
     }

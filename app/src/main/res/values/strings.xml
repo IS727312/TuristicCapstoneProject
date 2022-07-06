@@ -29,6 +29,7 @@
     <string name="save">Save</string>
     <string name="privacy_mode">Privacy Mode:</string>
     <string-array name="privacyMode">
+        <item>Choose a Privacy Mode</item>
         <item>Public</item>
         <item>Followers Only</item>
         <item>Friends Only</item>

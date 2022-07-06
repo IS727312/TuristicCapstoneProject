@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -14,11 +13,11 @@ import com.parse.ParseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
-    public static final String TAG = "LoginActivity";
-    private EditText etLoginUsername;
-    private EditText etLoginPassword;
-    private Button btnLogin;
-    private Button btnSignUp;
+    public static final String sTAG = "LoginActivity";
+    private EditText mEtLoginUsername;
+    private EditText mEtLoginPassword;
+    private Button mBtnLogin;
+    private Button mBtnSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,18 +28,18 @@ public class LoginActivity extends AppCompatActivity {
             goFeedActivity();
         }
 
-        etLoginPassword = findViewById(R.id.etLoginPassword);
-        etLoginUsername = findViewById(R.id.etLoginUsername);
-        btnLogin = findViewById(R.id.btnLogin);
-        btnSignUp = findViewById(R.id.btnSignUp);
+        mEtLoginPassword = findViewById(R.id.etLoginPassword);
+        mEtLoginUsername = findViewById(R.id.etLoginUsername);
+        mBtnLogin = findViewById(R.id.btnLogin);
+        mBtnSignUp = findViewById(R.id.btnSignUp);
 
-        btnLogin.setOnClickListener(v -> {
-            String password = etLoginPassword.getText().toString();
-            String username = etLoginUsername.getText().toString();
+        mBtnLogin.setOnClickListener(v -> {
+            String password = mEtLoginPassword.getText().toString();
+            String username = mEtLoginUsername.getText().toString();
             loginUser(username, password);
         });
 
-        btnSignUp.setOnClickListener(v -> {
+        mBtnSignUp.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(i);
         });
@@ -49,7 +48,7 @@ public class LoginActivity extends AppCompatActivity {
     private void loginUser(String username, String password) {
         ParseUser.logInInBackground(username, password, (user, e) -> {
             if(e != null){
-                Log.e(TAG, "Issue with Login: ", e);
+                Log.e(sTAG, "Issue with Login: ", e);
                 Toast.makeText(LoginActivity.this, "Issue with Login", Toast.LENGTH_SHORT).show();
                 return;
             }

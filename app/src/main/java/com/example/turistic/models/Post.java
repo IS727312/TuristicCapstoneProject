@@ -12,24 +12,20 @@ import java.util.Date;
 @ParseClassName("Post")
 public class Post extends ParseObject {
 
-    public static final String TAG = "Post";
-    public static final String KEY_CAPTION =  "caption";
-    public static final String KEY_PICTURE = "picture";
-    public static final String KEY_OWNER = "owner";
-    public static final String KEY_LIKES = "likes";
-    public static final String KEY_TITLE = "title";
+    public static final String sTAG = "Post";
+    public static final String sKEY_CAPTION =  "caption";
+    public static final String sKEY_PICTURE = "picture";
+    public static final String sKEY_OWNER = "owner";
+    public static final String sKEY_TITLE = "title";
 
-    public String getCaption() {return getString(KEY_CAPTION); }
-    public void setCaption(String caption) {put(KEY_CAPTION, caption); }
-    public ParseFile getPicture() {return getParseFile(KEY_PICTURE); }
-    public void  setPicture(ParseFile picture) {put(KEY_PICTURE, picture); }
-    public ParseUser getOwner() {return  getParseUser(KEY_OWNER); }
-    public void setOwner(ParseUser owner) {put(KEY_OWNER, owner); }
-    public String getTitle() {return getString(KEY_TITLE); }
-    public void setTitle(String title) {put(KEY_TITLE, title); }
-    public int getLikes() {return getInt(KEY_LIKES); }
-    public void increaseLikes() {put(KEY_LIKES, getLikes() + 1);}
-    public void decreaseLikes() {put(KEY_LIKES, getLikes() - 1);}
+    public String getCaption() {return getString(sKEY_CAPTION); }
+    public void setCaption(String caption) {put(sKEY_CAPTION, caption); }
+    public ParseFile getPicture() {return getParseFile(sKEY_PICTURE); }
+    public void  setPicture(ParseFile picture) {put(sKEY_PICTURE, picture); }
+    public ParseUser getOwner() {return  getParseUser(sKEY_OWNER); }
+    public void setOwner(ParseUser owner) {put(sKEY_OWNER, owner); }
+    public String getTitle() {return getString(sKEY_TITLE); }
+    public void setTitle(String title) {put(sKEY_TITLE, title); }
 
     public String getRelativeTimeAgo(Date createdAt) {
         final int SECOND_MILLIS = 1000;
@@ -58,7 +54,7 @@ public class Post extends ParseObject {
                 return diff / DAY_MILLIS + " d";
             }
         } catch (Exception e) {
-            Log.i(TAG, "getRelativeTimeAgo failed", e);
+            Log.i(sTAG, "getRelativeTimeAgo failed", e);
             e.printStackTrace();
         }
 

@@ -33,11 +33,11 @@ import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
-    public static final String TAG = "ProfileFragment";
-    private ParseUser user;
-    private JSONArray followers, following;
-    protected PostAdapter adapter;
-    protected List<Post> userPosts;
+    public static final String sTAG = "ProfileFragment";
+    private ParseUser mUser;
+    private JSONArray mFollowers, mFollowing;
+    private PostAdapter mAdapter;
+    private List<Post> mUserPosts;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -54,9 +54,9 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        user = ParseUser.getCurrentUser();
-        followers = user.getJSONArray("followers");
-        following = user.getJSONArray("following");
+        mUser = ParseUser.getCurrentUser();
+        mFollowers = mUser.getJSONArray("followers");
+        mFollowing = mUser.getJSONArray("following");
         ParseFile profilePicture = ParseUser.getCurrentUser().getParseFile("profilePicture");
         RecyclerView rvProfilePosts = view.findViewById(R.id.rvProfilePosts);
 
@@ -68,10 +68,10 @@ public class ProfileFragment extends Fragment {
         int totalFollowers;
         int totalFollowing;
 
-        userPosts = new ArrayList<>();
-        adapter = new PostAdapter(getContext(), userPosts);
+        mUserPosts = new ArrayList<>();
+        mAdapter = new PostAdapter(getContext(), mUserPosts);
 
-        rvProfilePosts.setAdapter(adapter);
+        rvProfilePosts.setAdapter(mAdapter);
         rvProfilePosts.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getPosts();
@@ -80,20 +80,20 @@ public class ProfileFragment extends Fragment {
         Glide.with(requireContext())
                 .load(profilePicture.getUrl())
                 .into(ivProfileProfilePicture);
-        if(followers == null){
+        if(mFollowers == null){
             totalFollowers = 0;
         }else{
-            totalFollowers = followers.length();
+            totalFollowers = mFollowers.length();
         }
 
-        if(following == null){
+        if(mFollowing == null){
             totalFollowing = 0;
         }else{
-            totalFollowing = following.length();
+            totalFollowing = mFollowing.length();
         }
         tvProfileFollowing.setText(String.format("Following: %d", totalFollowing));
         tvProfileFollowers.setText(String.format("Followers: %d", totalFollowers));
-        tvProfileUsername.setText(user.getUsername());
+        tvProfileUsername.setText(mUser.getUsername());
 
         iBtnEdit.setOnClickListener(v -> {
             Intent i = new Intent(getActivity(), EditActivity.class);
@@ -105,16 +105,16 @@ public class ProfileFragment extends Fragment {
     private void getPosts() {
         ParseQuery<Post> query = ParseQuery.getQuery(Post.class);
         // include data referred by user key
-        query.include(Post.KEY_OWNER);
+        query.include(Post.sKEY_OWNER);
         query.setLimit(20);
         query.addDescendingOrder("createdAt");
         query.findInBackground((objects, e) -> {
             for(Post post: objects){
-                if(user.getObjectId().equals(post.getOwner().getObjectId())){
-                    userPosts.add(post);
+                if(mUser.getObjectId().equals(post.getOwner().getObjectId())){
+                    mUserPosts.add(post);
                 }
             }
-            adapter.notifyDataSetChanged();
+            mAdapter.notifyDataSetChanged();
         });
     }
 }

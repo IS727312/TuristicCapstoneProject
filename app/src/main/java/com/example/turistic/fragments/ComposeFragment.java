@@ -9,7 +9,6 @@ import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -32,10 +31,8 @@ import com.example.turistic.BitmapScaler;
 import com.example.turistic.MainActivity;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
-import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,14 +42,14 @@ import java.io.IOException;
 
 public class ComposeFragment extends Fragment {
 
-    public static final String TAG = "ComposeFragment";
-    public static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 42;
-    public static final int SELECT_PICTURE_REQUEST_CODE = 200;
-    private EditText etComposeTitle;
-    private ImageView ivComposePictureToPost;
-    private EditText etComposeCaption;
-    private File photoFile;
-    public String photoFileName = "photo.jpg";
+    public static final String sTAG = "ComposeFragment";
+    public static final int sCAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 42;
+    public static final int sSELECT_PICTURE_REQUEST_CODE = 200;
+    private EditText mEtComposeTitle;
+    private ImageView mIvComposePictureToPost;
+    private EditText mEtComposeCaption;
+    private File mPhotoFile;
+    public String mPhotoFileName = "photo.jpg";
 
     public ComposeFragment() {
         // Required empty public constructor
@@ -67,28 +64,28 @@ public class ComposeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Log.i(TAG, "COMPOSE FRAGMENT");
+        Log.i(sTAG, "COMPOSE FRAGMENT");
         Button btnComposeSubmitPicture = view.findViewById(R.id.btnComposeSubmitPicture);
         Button btnComposeSubmitPost = view.findViewById(R.id.btnComposeSubmitPost);
         Button btnComposeTakePicture = view.findViewById(R.id.btnComposeTakePicture);
-        etComposeTitle = view.findViewById(R.id.etComposeTitle);
-        etComposeCaption = view.findViewById(R.id.etComposeCaption);
-        ivComposePictureToPost = view.findViewById(R.id.ivComposePictureToPost);
+        mEtComposeTitle = view.findViewById(R.id.etComposeTitle);
+        mEtComposeCaption = view.findViewById(R.id.etComposeCaption);
+        mIvComposePictureToPost = view.findViewById(R.id.ivComposePictureToPost);
 
         btnComposeTakePicture.setOnClickListener(v -> launchCamera());
 
         btnComposeSubmitPost.setOnClickListener(v -> {
-            String caption = etComposeCaption.getText().toString();
-            String title = etComposeTitle.getText().toString();
+            String caption = mEtComposeCaption.getText().toString();
+            String title = mEtComposeTitle.getText().toString();
             if(caption.isEmpty() || title.isEmpty()){
                 Toast.makeText(getContext(), "Empty fields", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if(photoFile == null || ivComposePictureToPost.getDrawable() == null){
+            if(mPhotoFile == null || mIvComposePictureToPost.getDrawable() == null){
                 Toast.makeText(getContext(), "There is no photo", Toast.LENGTH_SHORT).show();
             }
             ParseUser currentUser = ParseUser.getCurrentUser();
-            savePosts(caption, title, currentUser, photoFile);
+            savePosts(caption, title, currentUser, mPhotoFile);
             Intent i = new Intent(getContext(), MainActivity.class);
             startActivity(i);
         });
@@ -104,21 +101,21 @@ public class ComposeFragment extends Fragment {
             post.setOwner(currentUser);
             post.saveInBackground(e -> {
                 if(e != null){
-                    Log.e(TAG, "Error while saving the post: ", e);
+                    Log.e(sTAG, "Error while saving the post: ", e);
                     return;
                 }
 
                 post.saveInBackground(e1 -> {
                     if(e1 != null){
-                        Log.e(TAG, "Error while saving the post image: ", e1);
+                        Log.e(sTAG, "Error while saving the post image: ", e1);
                         return;
                     }
-                    Log.i(TAG, "PHOTO SAVED");
+                    Log.i(sTAG, "PHOTO SAVED");
                 });
-                Log.i(TAG, "Save successful");
-                etComposeTitle.setText("");
-                etComposeCaption.setText("");
-                ivComposePictureToPost.setImageResource(0);
+                Log.i(sTAG, "Save successful");
+                mEtComposeTitle.setText("");
+                mEtComposeCaption.setText("");
+                mIvComposePictureToPost.setImageResource(0);
             });
     }
 
@@ -126,7 +123,7 @@ public class ComposeFragment extends Fragment {
         // Create intent for picking a photo from the gallery
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, SELECT_PICTURE_REQUEST_CODE);
+        startActivityForResult(intent, sSELECT_PICTURE_REQUEST_CODE);
 
 
     }
@@ -146,22 +143,22 @@ public class ComposeFragment extends Fragment {
 
     private void launchCamera(){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        photoFile = getPhotoFileUri(photoFileName);
+        mPhotoFile = getPhotoFileUri(mPhotoFileName);
 
-        Uri fileProvider = FileProvider.getUriForFile(requireContext(), "com.codepath.fileprovider", photoFile);
+        Uri fileProvider = FileProvider.getUriForFile(requireContext(), "com.codepath.fileprovider", mPhotoFile);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider);
         if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
-            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+            startActivityForResult(intent, sCAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
         }
     }
 
     public File getPhotoFileUri(String fileName) {
         // Get safe storage directory for photos
-        File mediaStorageDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), TAG);
+        File mediaStorageDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), sTAG);
 
         // Create the storage directory if it does not exist
         if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()){
-            Log.d(TAG, "failed to create directory");
+            Log.d(sTAG, "failed to create directory");
         }
 
         return new File(mediaStorageDir.getPath() + File.separator + fileName);
@@ -170,21 +167,22 @@ public class ComposeFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+        if (requestCode == sCAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Bitmap takenImage = rotateBitmapOrientation(photoFile.getAbsolutePath());
+                Bitmap takenImage = rotateBitmapOrientation(mPhotoFile.getAbsolutePath());
                 // RESIZE BITMAP, see section below
-                Uri takenPhotoUri = Uri.fromFile(getPhotoFileUri(photoFileName));
+                Uri takenPhotoUri = Uri.fromFile(getPhotoFileUri(mPhotoFileName));
                 // by this point we have the camera photo on disk
                 Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
                 // See BitmapScaler.java: https://gist.github.com/nesquena/3885707fd3773c09f1bb
                 Bitmap resizedBitmap = BitmapScaler.scaleToFitWidth(rawTakenImage, 400);
 
                 // Configure byte output stream
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] bitmapdata = bos.toByteArray();
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, bos);
 
-                File resizedFile = getPhotoFileUri(photoFileName + "_resized");
+                File resizedFile = getPhotoFileUri(mPhotoFileName + "_resized");
                 try {
                     resizedFile.createNewFile();
                 } catch (IOException e) {
@@ -193,28 +191,19 @@ public class ComposeFragment extends Fragment {
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(resizedFile);
+                    fos.write(bitmapdata);
+                    fos.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                }
-                // Write the bytes of the bitmap to file
-                try {
-                    assert fos != null;
-                    fos.write(bytes.toByteArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                ivComposePictureToPost.setImageBitmap(takenImage);
+                mIvComposePictureToPost.setImageBitmap(takenImage);
             } else {
                 Toast.makeText(getContext(), "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
             }
         }
-        if (requestCode == SELECT_PICTURE_REQUEST_CODE) {
+        if (requestCode == sSELECT_PICTURE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
 
                 Uri photoUri = data.getData();
@@ -223,7 +212,7 @@ public class ComposeFragment extends Fragment {
                 Bitmap selectedImage = loadFromUri(photoUri);
 
                 //create a file to write bitmap data
-                File f = new File(getContext().getCacheDir(), photoFileName);
+                File f = new File(getContext().getCacheDir(), mPhotoFileName);
                 try {
                     f.createNewFile();
                 } catch (IOException e) {
@@ -239,28 +228,18 @@ public class ComposeFragment extends Fragment {
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(f);
+                    fos.write(bitmapdata);
+                    fos.flush();
+                    fos.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                }
-                try {
-                    fos.write(bitmapdata);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    fos.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    fos.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                photoFile = f;
+                mPhotoFile = f;
 
-                ivComposePictureToPost.setImageBitmap(selectedImage);
+                mIvComposePictureToPost.setImageBitmap(selectedImage);
             }
         }
     }
@@ -272,7 +251,7 @@ public class ComposeFragment extends Fragment {
         BitmapFactory.decodeFile(photoFilePath, bounds);
         BitmapFactory.Options opts = new BitmapFactory.Options();
         Bitmap bm = BitmapFactory.decodeFile(photoFilePath, opts);
-        // Read EXIF Data
+        // Read EXIF Data -> Get the orientation the camera is originally in, and rotate the image based on that
         ExifInterface exif = null;
         try {
             exif = new ExifInterface(photoFilePath);
@@ -282,10 +261,14 @@ public class ComposeFragment extends Fragment {
         String orientString = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
         int orientation = orientString != null ? Integer.parseInt(orientString) : ExifInterface.ORIENTATION_NORMAL;
         int rotationAngle = 0;
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotationAngle = 90;
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotationAngle = 180;
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotationAngle = 270;
-        // Rotate Bitmap
+        switch (orientation){
+            case ExifInterface.ORIENTATION_ROTATE_90: rotationAngle = 90;
+            break;
+            case ExifInterface.ORIENTATION_ROTATE_180: rotationAngle = 180;
+            break;
+            case ExifInterface.ORIENTATION_ROTATE_270: rotationAngle = 270;
+            break;
+        }
         Matrix matrix = new Matrix();
         matrix.setRotate(rotationAngle, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
         return Bitmap.createBitmap(bm, 0, 0, bounds.outWidth, bounds.outHeight, matrix, true);

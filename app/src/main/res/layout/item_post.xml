@@ -44,7 +44,7 @@
         android:layout_marginStart="4dp"
         android:layout_marginTop="26dp"
         android:layout_toEndOf="@+id/ivProfilePicture"
-        android:text="@string/example_caption" />
+        />
 
     <TextView
         android:id="@+id/tvUsername"
