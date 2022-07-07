@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.2029376498800959" />
+        <entry key="../../.gradle/caches/transforms-3/1e819bd462321bba21f2f8fbe97677fb/transformed/facebook-share-5.1.0/res/drawable/com_facebook_button_send_background.xml" value="0.225" />
         <entry key="app/src/main/res/drawable/circle.xml" value="0.181" />
         <entry key="app/src/main/res/drawable/img.xml" value="0.181" />
         <entry key="app/src/main/res/layout/activity_compose.xml" value="0.29393115942028986" />

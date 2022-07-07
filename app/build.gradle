@@ -43,5 +43,9 @@ dependencies {
     // Glide v4 uses this new annotation processor -- see https://bumptech.github.io/glide/doc/generatedapi.html
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
     implementation 'com.github.WilliBoelke:simple-recycler-view-swipe-gestures:v1.1'
+    implementation 'com.google.android.gms:play-services-auth:20.2.0'
+    implementation 'com.facebook.android:facebook-login:latest.release'
+    implementation "com.github.parse-community.Parse-SDK-Android:facebook:3.0.0"
+
 
 }

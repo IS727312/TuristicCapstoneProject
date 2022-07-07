@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
@@ -16,8 +17,10 @@ import com.example.turistic.fragments.FeedFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
 import com.example.turistic.models.Post;
+import com.facebook.login.LoginManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.parse.FindCallback;
+import com.parse.LogOutCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -53,7 +56,29 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        btnFeedLogOut.setOnClickListener(v -> ParseUser.logOutInBackground(e -> {
+        btnFeedLogOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LoginManager.getInstance().logOut();
+                ParseUser.logOutInBackground(new LogOutCallback() {
+                    @Override
+                    public void done(ParseException e) {
+                        if (e != null){
+                            Log.e(sTAG, "Issue with Logging Out: " + e);
+                            return;
+                        }
+                        ParseUser currentUser = ParseUser.getCurrentUser();
+                        if(currentUser == null){
+                            Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivity(i);
+                        }
+                    }
+                });
+            }
+        });
+/*
+        btnFeedLogOut.setOnClickListener(v ->
+                ParseUser.logOutInBackground(e -> {
             if (e != null){
                 Log.e(sTAG, "Issue with Logging Out: " + e);
                 return;
@@ -64,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         }));
+
+ */
 
         btnFeedSearchPost.setOnClickListener(v -> {
             Intent i = new Intent(MainActivity.this, SearchActivity.class);

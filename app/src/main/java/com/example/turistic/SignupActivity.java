@@ -65,7 +65,6 @@ public class SignupActivity extends AppCompatActivity {
                 } else {
                     Log.e(sTAG, "Error with signing up" + e);
                 }
-
             });
         });
     }

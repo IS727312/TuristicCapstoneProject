@@ -4,7 +4,9 @@ import android.app.Application;
 
 import com.example.turistic.models.Post;
 import com.parse.Parse;
+import com.parse.ParseFileUtils;
 import com.parse.ParseObject;
+import com.parse.facebook.ParseFacebookUtils;
 
 public class ParseApplication extends Application {
     @Override
@@ -19,5 +21,7 @@ public class ParseApplication extends Application {
                 .clientKey(getString(R.string.back4app_client_key))
                 .server(getString(R.string.back4app_server_url))
                 .build());
+
+        ParseFacebookUtils.initialize(this);
     }
 }
