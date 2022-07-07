@@ -9,19 +9,13 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import com.example.turistic.fragments.FeedFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
-import com.example.turistic.models.Post;
 import com.facebook.login.LoginManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.parse.FindCallback;
-import com.parse.LogOutCallback;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -35,10 +29,9 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String sTAG = "FeedActivity";
     final FragmentManager mFragmentManager = getSupportFragmentManager();
-    private FrameLayout mFrameLayout;
     private List<ParseUser> mAllUsers;
     private ParseUser mCurrentUser;
-
+    private int prevFragment = 0;
     @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,46 +44,25 @@ public class MainActivity extends AppCompatActivity {
         mAllUsers = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
 
-        mFrameLayout = findViewById(R.id.flMainActivity);
         ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        btnFeedLogOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LoginManager.getInstance().logOut();
-                ParseUser.logOutInBackground(new LogOutCallback() {
-                    @Override
-                    public void done(ParseException e) {
-                        if (e != null){
-                            Log.e(sTAG, "Issue with Logging Out: " + e);
-                            return;
-                        }
-                        ParseUser currentUser = ParseUser.getCurrentUser();
-                        if(currentUser == null){
-                            Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                            startActivity(i);
-                        }
-                    }
-                });
-            }
+        btnFeedLogOut.setOnClickListener(v -> {
+            //LogInManager is used for logging out of Facebook
+            LoginManager.getInstance().logOut();
+            ParseUser.logOutInBackground(e -> {
+                if (e != null){
+                    Log.e(sTAG, "Issue with Logging Out: " + e);
+                    return;
+                }
+                ParseUser currentUser = ParseUser.getCurrentUser();
+                if(currentUser == null){
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(i);
+                }
+            });
         });
-/*
-        btnFeedLogOut.setOnClickListener(v ->
-                ParseUser.logOutInBackground(e -> {
-            if (e != null){
-                Log.e(sTAG, "Issue with Logging Out: " + e);
-                return;
-            }
-            ParseUser currentUser = ParseUser.getCurrentUser();
-            if(currentUser == null){
-                Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(i);
-            }
-        }));
-
- */
 
         btnFeedSearchPost.setOnClickListener(v -> {
             Intent i = new Intent(MainActivity.this, SearchActivity.class);
@@ -99,19 +71,44 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment fragment;
+            int slideInAnim, slideOutAnim, popInAnim, popOutAnim;
             switch (item.getItemId()){
                 case R.id.action_profile:
                     fragment = new ProfileFragment();
+                    prevFragment = 1;
+                    slideInAnim = R.anim.slide_in_right;
+                    slideOutAnim = R.anim.slide_out_left;
+                    popInAnim = R.anim.slide_in_left;
+                    popOutAnim = R.anim.slide_out_right;
                     break;
                 case R.id.action_compose:
                     fragment = new ComposeFragment();
+                    prevFragment = 2;
+                    slideInAnim = R.anim.slide_in_left;
+                    slideOutAnim = R.anim.slide_out_right;
+                    popInAnim = R.anim.slide_in_right;
+                    popOutAnim = R.anim.slide_out_left;
                     break;
                 case R.id.action_feed:
                 default:
                     fragment = new FeedFragment();
+                    if(prevFragment == 1){
+                        slideInAnim = R.anim.slide_in_left;
+                        slideOutAnim = R.anim.slide_out_right;
+                        popInAnim = R.anim.slide_in_right;
+                        popOutAnim = R.anim.slide_out_left;
+                    } else {
+                        slideInAnim = R.anim.slide_in_right;
+                        slideOutAnim = R.anim.slide_out_left;
+                        popInAnim = R.anim.slide_in_left;
+                        popOutAnim = R.anim.slide_out_right;
+                    }
                     break;
             }
-            mFragmentManager.beginTransaction().replace(R.id.flMainActivity, fragment).commit();
+            mFragmentManager.beginTransaction()
+                    .setCustomAnimations(slideInAnim,slideOutAnim,
+                            popInAnim, popOutAnim)
+                    .replace(R.id.flMainActivity, fragment).commit();
             return true;
         });
         try {
@@ -132,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             mAllUsers.addAll(objects);
-            ArrayList<ParseUser> currentUserFollowerList = (ArrayList) mCurrentUser.get("followers");
             for(ParseUser user: mAllUsers){
                 ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
                 if(userFollowingList != null){
