@@ -56,6 +56,7 @@ public class LoginActivity extends AppCompatActivity {
         mBtnSignUp.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(i);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         btnLoginFacebook.setOnClickListener(v -> {
