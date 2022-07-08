@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +15,7 @@ import android.widget.ImageButton;
 import com.example.turistic.fragments.FeedFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
+import com.example.turistic.models.FollowersRequestedFollowing;
 import com.facebook.login.LoginManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.parse.ParseQuery;
@@ -27,9 +29,10 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String sTAG = "FeedActivity";
+    public static final String sTAG = "MainActivity";
     final FragmentManager mFragmentManager = getSupportFragmentManager();
     private List<ParseUser> mAllUsers;
+    private List<FollowersRequestedFollowing> mAllRequests;
     private ParseUser mCurrentUser;
     private int prevFragment = 0;
     @SuppressLint("NonConstantResourceId")
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        mAllRequests = new ArrayList<>();
         mAllUsers = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
 
@@ -113,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         });
         try {
             addNewFollowers();
+            checkRequests();
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -121,28 +126,61 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addNewFollowers() throws JSONException {
-        ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
-        query.addDescendingOrder("createdAt");
-        query.findInBackground((objects, e) -> {
-            if (e != null) {
-                Log.e(sTAG, "Issue with getting users", e);
-                return;
-            }
-            mAllUsers.addAll(objects);
-            for(ParseUser user: mAllUsers){
-                ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
-                if(userFollowingList != null){
-                    for(int i = 0; i < userFollowingList.size(); i++){
-                        if(userFollowingList.get(i).getObjectId().equals(mCurrentUser.getObjectId()) &&
-                            !isAlreadyFollowed(user)){
-                            mCurrentUser.add("followers", user);
-                            mCurrentUser.saveInBackground();
+        if(mCurrentUser.getBoolean("anyoneCanFollow")) {
+            ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
+            query.addDescendingOrder("createdAt");
+            query.findInBackground((objects, e) -> {
+                if (e != null) {
+                    Log.e(sTAG, "Issue with getting new followers", e);
+                    return;
+                }
+                mAllUsers.addAll(objects);
+                for (ParseUser user : mAllUsers) {
+                    ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
+                    if (userFollowingList != null) {
+                        for (int i = 0; i < userFollowingList.size(); i++) {
+                            if (userFollowingList.get(i).getObjectId().equals(mCurrentUser.getObjectId()) &&
+                                    !isAlreadyFollowed(user)) {
+                                mCurrentUser.add("followers", user);
+                                mCurrentUser.saveInBackground();
+                            }
                         }
                     }
-                }
 
+                }
+            });
+        }else{
+            ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
+            queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
+            queryRequests.addDescendingOrder("createdAt");
+            queryRequests.findInBackground((objects, e) -> {
+                if (e != null) {
+                    Log.e(sTAG, "Issue with getting requests", e);
+                    return;
+                }
+                mAllRequests.addAll(objects);
+
+                for (FollowersRequestedFollowing request : mAllRequests) {
+                    if (request.getRequestedFollowing().getObjectId().equals(mCurrentUser.getObjectId())) {
+                        ParseUser newFollower = request.getFollower();
+                        AlertDialog.Builder builder =
+                                new AlertDialog.Builder(MainActivity.this).
+                                        setMessage("@" + newFollower.getUsername()).
+                                        setPositiveButton("Accept", (dialog, which) -> {
+                                            dialog.dismiss();
+                                            request.setStatus(true);
+                                            request.saveInBackground();
+                                            mCurrentUser.add("followers", newFollower);
+                                        }).
+                                        setNegativeButton("Decline", (dialog, which) -> {
+                                            dialog.dismiss();
+                                            request.deleteInBackground(e1 -> Log.i(sTAG, "Request Declined"));
+                                        });
+                        builder.create().show();
+                    }
             }
-        });
+            });
+        }
     }
 
     private boolean isAlreadyFollowed(ParseUser user){
@@ -155,5 +193,40 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    private void checkRequests(){
+        mAllRequests.clear();
+        ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
+        queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
+        queryRequests.addDescendingOrder("createdAt");
+        queryRequests.findInBackground((objects, e) -> {
+            if (e != null) {
+                Log.e(sTAG, "Issue with getting requests", e);
+                return;
+            }
+            mAllRequests.addAll(objects);
+        for (FollowersRequestedFollowing request: mAllRequests){
+            if(request.getFollower().getObjectId().equals(mCurrentUser.getObjectId())){
+                if(request.getStatus()){
+                    mCurrentUser.add("following", request.getRequestedFollowing());
+                    request.deleteInBackground(e1 -> Log.i(sTAG, "Your request was accepted"));
+                }
+            }
+        }
+        });
+    }
+
+    private void getRequests(){
+        ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
+        queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
+        queryRequests.addDescendingOrder("createdAt");
+        queryRequests.findInBackground((objects, e) -> {
+            if (e != null) {
+                Log.e(sTAG, "Issue with getting requests", e);
+                return;
+            }
+            mAllRequests.addAll(objects);
+        });
     }
 }

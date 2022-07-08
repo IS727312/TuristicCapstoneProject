@@ -2,9 +2,9 @@ package com.example.turistic;
 
 import android.app.Application;
 
+import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
 import com.parse.Parse;
-import com.parse.ParseFileUtils;
 import com.parse.ParseObject;
 import com.parse.facebook.ParseFacebookUtils;
 
@@ -15,6 +15,7 @@ public class ParseApplication extends Application {
 
         //Register your parse models
         ParseObject.registerSubclass(Post.class);
+        ParseObject.registerSubclass(FollowersRequestedFollowing.class);
 
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.back4app_app_id))

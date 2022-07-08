@@ -20,6 +20,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.adapters.UserAdapter;
+import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -169,15 +170,28 @@ public class FeedFragment extends Fragment {
 
                 if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
                     if(!isAlreadyFollowed(post)){
-                        Toast.makeText(getContext(), "Following user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
-                        mCurrentUser.add("following", postOwner);
-                        mCurrentUser.saveInBackground(e -> {
-                            if(e != null){
-                                Log.e(sTAG,"Could not add user", e);
-                                return;
-                            }
-                            Log.i(sTAG, "Follower added successfully");
-                        });
+                        if(postOwner.getBoolean("anyoneCanFollow")) {
+                            Toast.makeText(getContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                            mCurrentUser.add("following", postOwner);
+                            mCurrentUser.saveInBackground(e -> {
+                                if (e != null) {
+                                    Log.e(sTAG, "Could not add user", e);
+                                    return;
+                                }
+                                Log.i(sTAG, "Follower added successfully");
+                            });
+                        }else {
+                            FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
+                            frf.setFollower(mCurrentUser);
+                            frf.setRequestedFollowing(postOwner);
+                            frf.saveInBackground(e -> {
+                                if (e != null) {
+                                    Log.e(sTAG, "Could not add user", e);
+                                    return;
+                                }
+                                Toast.makeText(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
+                            });
+                        }
                     }else {
                         Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
                     }
