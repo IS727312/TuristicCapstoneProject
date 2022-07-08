@@ -39,7 +39,7 @@ public class SearchActivity extends AppCompatActivity {
     private EditText mEtTitleToSearch;
     private String mSearchQuery;
     private ParseUser mCurrentUser;
-    private  int mUserPrivacyMode;
+    private int mUserPrivacyMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,8 +114,7 @@ public class SearchActivity extends AppCompatActivity {
                         case 2:
                             onUserIsFriendsOnly(post);
                             break;
-                        case 3: default:
-                            onUserIsPrivate();
+                       default:
                             break;
                     }
                 }
@@ -129,30 +128,12 @@ public class SearchActivity extends AppCompatActivity {
         ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
         query.setLimit(20);
         query.addDescendingOrder("createdAt");
-        query.findInBackground((objects, e) -> {
+        query.findInBackground((users, e) -> {
             if(e != null){
                 Log.e(sTAG, "Issues with retrieving users");
                 return;
             }
-            for(ParseUser parseUser: objects){
-                if(parseUser.getUsername().toLowerCase(Locale.ROOT).equals(mSearchQuery) ){
-                    mUserPrivacyMode = parseUser.getInt("profileMode");
-                    switch (mUserPrivacyMode){
-                        case 0:
-                            onUserIsPublic(parseUser);
-                            break;
-                        case 1:
-                            onUserIsFollowersOnly(parseUser);
-                            break;
-                        case 2:
-                            onUserIsFriendsOnly(parseUser);
-                            break;
-                        case 3: default:
-                            onUserIsPrivate();
-                            break;
-                    }
-                }
-            }
+            mQueryUsers.addAll(users);
             mUserAdapter.notifyDataSetChanged();
         });
     }
@@ -223,7 +204,7 @@ public class SearchActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
             //Limit the distance of the swipe
             super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
         }
@@ -242,19 +223,10 @@ public class SearchActivity extends AppCompatActivity {
         return false;
     }
 
-    private void onUserIsPrivate() {
-        Log.i(sTAG, "PRIVATE");
-    }
 
     private void onUserIsFriendsOnly(Post post) {
         if(isFollowing(post.getOwner()) && isFollowedBy(post.getOwner())){
             mQueryPosts.add(post);
-        }
-    }
-
-    private void onUserIsFriendsOnly(ParseUser user) {
-        if(isFollowing(user) && isFollowedBy(user)){
-            mQueryUsers.add(user);
         }
     }
 
@@ -264,18 +236,8 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-    private void onUserIsFollowersOnly(ParseUser user) {
-        if(isFollowing(user)){
-            mQueryUsers.add(user);
-        }
-    }
-
     private void onUserIsPublic(Post post) {
         mQueryPosts.add(post);
-    }
-
-    private void onUserIsPublic(ParseUser user) {
-        mQueryUsers.add(user);
     }
 
     private boolean isFollowedBy(ParseUser owner) {

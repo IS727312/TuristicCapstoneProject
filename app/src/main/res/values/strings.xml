@@ -35,8 +35,14 @@
         <item>Friends Only</item>
         <item>Private</item>
     </string-array>
+    <string-array name="anyoneCanFollow">
+        <item>Anyone can follow you?</item>
+        <item>Yes</item>
+        <item>No</item>
+    </string-array>
     <string name="facebook_app_id">1189869938475313</string>
     <string name="fb_login_protocol_scheme">fb1189869938475313</string>
     <string name="facebook_client_token">9ab9a8529d891df9d2c66da5b16de1f6</string>
     <string name="login_with_facebook">Login with Facebook</string>
+    <string name="anyone_can_follow">Anyone can follow you?</string>
 </resources>

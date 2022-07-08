@@ -18,7 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.example.turistic.EditUserInformation;
+import com.example.turistic.EditUserInformationActivity;
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
@@ -96,7 +96,7 @@ public class ProfileFragment extends Fragment {
         tvProfileUsername.setText(mUser.getUsername());
 
         iBtnEdit.setOnClickListener(v -> {
-            Intent i = new Intent(getActivity(), EditUserInformation.class);
+            Intent i = new Intent(getActivity(), EditUserInformationActivity.class);
             startActivity(i);
         });
     }

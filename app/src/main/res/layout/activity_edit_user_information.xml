@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    tools:context=".EditUserInformation">
+    tools:context=".EditUserInformationActivity">
 
     <ImageView
         android:id="@+id/ivEditProfilePicture"
@@ -13,7 +13,8 @@
         android:layout_height="150dp"
         android:layout_marginHorizontal="100dp"
         android:layout_weight="1"
-        tools:srcCompat="@tools:sample/avatars" />
+        tools:srcCompat="@tools:sample/avatars"
+        android:contentDescription="@string/profile" />
 
     <EditText
         android:id="@+id/etEditUsername"
@@ -73,6 +74,30 @@
             android:layout_weight="1"
             android:contentDescription="@string/back4app_client_key"
             android:spinnerMode="dropdown" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <TextView
+            android:id="@+id/tvEditAnyoneCanFollow"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="@string/anyone_can_follow"/>
+
+        <Spinner
+            android:id="@+id/spnEditFollowingMode"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:contentDescription="@string/anyone_can_follow"
+            android:spinnerMode="dropdown"
+            tools:ignore="DuplicateSpeakableTextCheck,DuplicateSpeakableTextCheck" />
+
     </LinearLayout>
 
     <Button

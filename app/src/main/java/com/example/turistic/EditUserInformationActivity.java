@@ -28,21 +28,25 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class EditUserInformation extends AppCompatActivity {
+public class EditUserInformationActivity extends AppCompatActivity {
 
     public static final String sTAG = "EditActivity";
     public static final int sSELECT_PICTURE_REQUEST_CODE = 200;
-    private Spinner mSpnPrivacyMode;
+    private Spinner mSpnEditPrivacyMode;
+    private Spinner mSpnEditFollowingMode;
     private EditText mEtEditUsername;
     private EditText mEtEditName;
     private EditText mEtEditLastName;
     private ImageView mIvEditProfilePicture;
-    private String mSpnValue;
+    private String mSpnPrivacyModeValue;
     private int mPrivacyModeValue;
     public String mPhotoFileName = "photo.jpg";
     private File mPhotoFile;
     private ParseUser mUser;
-    private Boolean mPhotoChanged = false;
+    private boolean mPhotoChanged = false;
+    private String mSpnFollowingModeValue;
+    private boolean mFollowingMode = true;
+    private int mFollowingModeValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,12 +61,18 @@ public class EditUserInformation extends AppCompatActivity {
         Button btnEditSave = findViewById(R.id.btnEditSave);
 
 
-        mSpnPrivacyMode = findViewById(R.id.spnEditPrivacyMode);
+        mSpnEditPrivacyMode = findViewById(R.id.spnEditPrivacyMode);
         mPrivacyModeValue = 0;
+
+        mSpnEditFollowingMode = findViewById(R.id.spnEditFollowingMode);
 
         ArrayAdapter<CharSequence> adapter=ArrayAdapter.createFromResource(this, R.array.privacyMode, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        mSpnPrivacyMode.setAdapter(adapter);
+        mSpnEditPrivacyMode.setAdapter(adapter);
+
+        ArrayAdapter<CharSequence> followingAdapter = ArrayAdapter.createFromResource(this, R.array.anyoneCanFollow, android.R.layout.simple_spinner_item);
+        followingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        mSpnEditFollowingMode.setAdapter(followingAdapter);
 
         setUserInfo();
 
@@ -72,8 +82,8 @@ public class EditUserInformation extends AppCompatActivity {
         });
 
         btnEditSave.setOnClickListener(v -> {
-            mSpnValue = mSpnPrivacyMode.getSelectedItem().toString();
-            switch (mSpnValue){
+            mSpnPrivacyModeValue = mSpnEditPrivacyMode.getSelectedItem().toString();
+            switch (mSpnPrivacyModeValue){
                 case "Choose a Privacy Mode":mPrivacyModeValue = -1;
                 break;
                 case "Public":mPrivacyModeValue = 0;
@@ -84,6 +94,22 @@ public class EditUserInformation extends AppCompatActivity {
                 break;
                 case "Private":
                 default: mPrivacyModeValue = 3;
+                    break;
+            }
+
+            mSpnFollowingModeValue = mSpnEditFollowingMode.getSelectedItem().toString();
+            switch (mSpnFollowingModeValue){
+                case "Anyone can follow you?":
+                    mFollowingModeValues = -1;
+                    break;
+                case "Yes":
+                    mFollowingModeValues = 0;
+                    mFollowingMode = true;
+                    break;
+                case "No":
+                default:
+                    mFollowingModeValues = 1;
+                    mFollowingMode = false;
                     break;
             }
             if(!mEtEditName.getText().toString().isEmpty()) {
@@ -99,15 +125,18 @@ public class EditUserInformation extends AppCompatActivity {
                 mUser.put("profilePicture",new ParseFile(mPhotoFile));
             }
             if(mPrivacyModeValue == -1){
-                Toast.makeText(EditUserInformation.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
-            }else {
+                Toast.makeText(EditUserInformationActivity.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
+            }else if(mFollowingModeValues == -1){
+                Toast.makeText(EditUserInformationActivity.this, "Following Mode not selected", Toast.LENGTH_SHORT).show();
+            } else {
                 mUser.put("profileMode", mPrivacyModeValue);
+                mUser.put("anyoneCanFollow", mFollowingMode);
                 mUser.saveInBackground(e -> {
                     if (e != null) {
                         Log.e(sTAG, "Issue with updating data");
                     }
-                    Toast.makeText(EditUserInformation.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
-                    Intent i = new Intent(EditUserInformation.this, MainActivity.class);
+                    Toast.makeText(EditUserInformationActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent(EditUserInformationActivity.this, MainActivity.class);
                     startActivity(i);
                 });
             }
@@ -122,9 +151,9 @@ public class EditUserInformation extends AppCompatActivity {
         mEtEditLastName.setHint(mUser.getString("lastName"));
         mEtEditUsername.setHint(mUser.getUsername());
         assert profilePicture != null;
-        Glide.with(EditUserInformation.this).load(profilePicture.getUrl()).into(mIvEditProfilePicture);
+        Glide.with(EditUserInformationActivity.this).load(profilePicture.getUrl()).into(mIvEditProfilePicture);
 
-        mSpnPrivacyMode.setSelection(userPrivacyMode);
+        mSpnEditPrivacyMode.setSelection(userPrivacyMode);
     }
 
     public void onPickPhoto(View view) {
@@ -140,7 +169,7 @@ public class EditUserInformation extends AppCompatActivity {
         try {
             // check version of Android on device
             // on newer versions of Android, use the new decodeBitmap method
-            ImageDecoder.Source source = ImageDecoder.createSource(EditUserInformation.this.getContentResolver(), photoUri);
+            ImageDecoder.Source source = ImageDecoder.createSource(EditUserInformationActivity.this.getContentResolver(), photoUri);
             image = ImageDecoder.decodeBitmap(source);
         } catch (IOException e) {
             e.printStackTrace();
@@ -161,7 +190,7 @@ public class EditUserInformation extends AppCompatActivity {
                 Bitmap selectedImage = loadFromUri(photoUri);
 
                 //create a file to write bitmap data
-                File f = new File(EditUserInformation.this.getCacheDir(), mPhotoFileName);
+                File f = new File(EditUserInformationActivity.this.getCacheDir(), mPhotoFileName);
                 try {
                     f.createNewFile();
                 } catch (IOException e) {
