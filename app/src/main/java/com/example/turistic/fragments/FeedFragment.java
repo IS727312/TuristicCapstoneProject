@@ -19,7 +19,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
-import com.example.turistic.adapters.UserAdapter;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
 import com.parse.ParseQuery;
@@ -35,8 +34,8 @@ public class FeedFragment extends Fragment {
     private ParseUser mCurrentUser;
     private  int mUserPrivacyMode;
     private PostAdapter mAdapter;
-    private UserAdapter mUserAdapter;
     private List<ParseUser> mAllUsers;
+    private List<FollowersRequestedFollowing> mQueryRequests;
     private List<Post> mAllPosts;
 
     public FeedFragment(){
@@ -57,7 +56,7 @@ public class FeedFragment extends Fragment {
 
         mAllPosts = new ArrayList<>();
         mAllUsers = new ArrayList<>();
-        mUserAdapter = new UserAdapter(getContext(), mAllUsers);
+        mQueryRequests = new ArrayList<>();
         mAdapter = new PostAdapter(getContext(), mAllPosts);
         mCurrentUser = ParseUser.getCurrentUser();
 
@@ -65,14 +64,26 @@ public class FeedFragment extends Fragment {
         rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getPosts();
+        getRequests();
         mSrFeedFragment.setOnRefreshListener(() -> {
             mAllPosts.clear();
+            mQueryRequests.clear();
             getPosts();
+            getRequests();
             mSrFeedFragment.setRefreshing(false);
         });
 
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvFeedFragment);
 
+    }
+
+    private void getRequests() {
+        ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
+        queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
+        queryRequests.addDescendingOrder("createdAt");
+        queryRequests.findInBackground((objects, e) -> {
+            mQueryRequests.addAll(objects);
+        });
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -169,7 +180,7 @@ public class FeedFragment extends Fragment {
                 ParseUser postOwner = post.getOwner();
 
                 if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
-                    if(!isAlreadyFollowed(post)){
+                    if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
                         if(postOwner.getBoolean("anyoneCanFollow")) {
                             Toast.makeText(getContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
                             mCurrentUser.add("following", postOwner);
@@ -192,6 +203,11 @@ public class FeedFragment extends Fragment {
                                 Toast.makeText(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
                             });
                         }
+                        if(alreadyRequested(postOwner)){
+                            Toast.makeText(getContext(), "Request already sent", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
+                        }
                     }else {
                         Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
                     }
@@ -203,20 +219,29 @@ public class FeedFragment extends Fragment {
         }
 
         @Override
-        public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
             //Limit the distance of the swipe
             super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
         }
     };
 
-    private boolean isAlreadyFollowed(Post post){
-        ParseUser postOwner = post.getOwner();
+    private boolean isAlreadyFollowed(ParseUser postOwner){
         ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
         if(followingList != null) {
             for (ParseUser user : followingList) {
                 if (postOwner.getObjectId().equals(user.getObjectId())) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean alreadyRequested(ParseUser owner) {
+        for (FollowersRequestedFollowing request: mQueryRequests){
+            if(request.getFollower().getObjectId().equals(mCurrentUser.getObjectId())
+                    && request.getRequestedFollowing().getObjectId().equals(owner.getObjectId())){
+                return true;
             }
         }
         return false;
