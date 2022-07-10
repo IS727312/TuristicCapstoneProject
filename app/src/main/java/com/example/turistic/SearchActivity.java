@@ -1,5 +1,9 @@
 package com.example.turistic;
 
+import static com.example.turistic.enumerations.PrivacyMode.FOLLOWERS_ONLY;
+import static com.example.turistic.enumerations.PrivacyMode.FRIENDS_ONLY;
+import static com.example.turistic.enumerations.PrivacyMode.PUBLIC;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -106,13 +110,13 @@ public class SearchActivity extends AppCompatActivity {
                     || post.getOwner().getUsername().toLowerCase(Locale.ROOT).equals(mSearchQuery)){
                     mUserPrivacyMode = post.getOwner().getInt("profileMode");
                     switch (mUserPrivacyMode){
-                        case 0:
+                        case PUBLIC:
                             onUserIsPublic(post);
                             break;
-                        case 1:
+                        case FOLLOWERS_ONLY:
                             onUserIsFollowersOnly(post);
                             break;
-                        case 2:
+                        case FRIENDS_ONLY:
                             onUserIsFriendsOnly(post);
                             break;
                        default:

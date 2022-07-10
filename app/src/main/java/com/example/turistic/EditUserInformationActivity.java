@@ -1,5 +1,14 @@
 package com.example.turistic;
 
+import static com.example.turistic.enumerations.fromString.CHOOSE_FOLLOWING_MODE;
+import static com.example.turistic.enumerations.fromString.CHOOSE_PRIVACY_MODE;
+import static com.example.turistic.enumerations.fromString.FOLLOWERS_ONLY;
+import static com.example.turistic.enumerations.fromString.FRIENDS_ONLY;
+import static com.example.turistic.enumerations.fromString.NO;
+import static com.example.turistic.enumerations.fromString.PRIVATE;
+import static com.example.turistic.enumerations.fromString.PUBLIC;
+import static com.example.turistic.enumerations.fromString.YES;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -84,29 +93,29 @@ public class EditUserInformationActivity extends AppCompatActivity {
         btnEditSave.setOnClickListener(v -> {
             mSpnPrivacyModeValue = mSpnEditPrivacyMode.getSelectedItem().toString();
             switch (mSpnPrivacyModeValue){
-                case "Choose a Privacy Mode":mPrivacyModeValue = -1;
+                case CHOOSE_PRIVACY_MODE:mPrivacyModeValue = -1;
                 break;
-                case "Public":mPrivacyModeValue = 0;
+                case PUBLIC:mPrivacyModeValue = 0;
                 break;
-                case "Followers Only": mPrivacyModeValue = 1;
+                case FOLLOWERS_ONLY: mPrivacyModeValue = 1;
                 break;
-                case "Friends Only": mPrivacyModeValue = 2;
+                case FRIENDS_ONLY: mPrivacyModeValue = 2;
                 break;
-                case "Private":
+                case PRIVATE:
                 default: mPrivacyModeValue = 3;
                     break;
             }
 
             mSpnFollowingModeValue = mSpnEditFollowingMode.getSelectedItem().toString();
             switch (mSpnFollowingModeValue){
-                case "Anyone can follow you?":
+                case CHOOSE_FOLLOWING_MODE:
                     mFollowingModeValues = -1;
                     break;
-                case "Yes":
+                case YES:
                     mFollowingModeValues = 0;
                     mFollowingMode = true;
                     break;
-                case "No":
+                case NO:
                 default:
                     mFollowingModeValues = 1;
                     mFollowingMode = false;

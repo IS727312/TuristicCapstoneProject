@@ -1,5 +1,10 @@
 package com.example.turistic.fragments;
 
+import static com.example.turistic.enumerations.PrivacyMode.FOLLOWERS_ONLY;
+import static com.example.turistic.enumerations.PrivacyMode.FRIENDS_ONLY;
+import static com.example.turistic.enumerations.PrivacyMode.PRIVATE;
+import static com.example.turistic.enumerations.PrivacyMode.PUBLIC;
+
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.os.Bundle;
@@ -34,7 +39,6 @@ public class FeedFragment extends Fragment {
     private ParseUser mCurrentUser;
     private  int mUserPrivacyMode;
     private PostAdapter mAdapter;
-    private List<ParseUser> mAllUsers;
     private List<FollowersRequestedFollowing> mQueryRequests;
     private List<Post> mAllPosts;
 
@@ -55,7 +59,6 @@ public class FeedFragment extends Fragment {
         mSrFeedFragment = view.findViewById(R.id.srFeedFragment);
 
         mAllPosts = new ArrayList<>();
-        mAllUsers = new ArrayList<>();
         mQueryRequests = new ArrayList<>();
         mAdapter = new PostAdapter(getContext(), mAllPosts);
         mCurrentUser = ParseUser.getCurrentUser();
@@ -103,16 +106,16 @@ public class FeedFragment extends Fragment {
             for (Post post: posts){
                 mUserPrivacyMode = post.getOwner().getInt("profileMode");
                 switch (mUserPrivacyMode){
-                    case 0:
+                    case PUBLIC:
                         onUserIsPublic(post);
                         break;
-                    case 1:
+                    case FOLLOWERS_ONLY:
                         onUserIsFollowersOnly(post);
                         break;
-                    case 2:
+                    case FRIENDS_ONLY:
                         onUserIsFriendsOnly(post);
                         break;
-                    case 3: default:
+                    case PRIVATE: default:
                         onUserIsPrivate();
                         break;
                 }
@@ -203,13 +206,12 @@ public class FeedFragment extends Fragment {
                                 Toast.makeText(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
                             });
                         }
+                    }else {
                         if(alreadyRequested(postOwner)){
                             Toast.makeText(getContext(), "Request already sent", Toast.LENGTH_SHORT).show();
                         }else {
                             Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
                         }
-                    }else {
-                        Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
                     }
                 }else{
                     Toast.makeText(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();

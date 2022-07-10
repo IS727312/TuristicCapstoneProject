@@ -1,13 +1,21 @@
 package com.example.turistic;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
@@ -17,6 +25,11 @@ import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.facebook.login.LoginManager;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -30,11 +43,14 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     public static final String sTAG = "MainActivity";
+    public static final int LOCATION_REQUEST_CODE = 1;
     final FragmentManager mFragmentManager = getSupportFragmentManager();
     private List<ParseUser> mAllUsers;
     private List<FollowersRequestedFollowing> mAllRequests;
     private ParseUser mCurrentUser;
     private int prevFragment = 0;
+    FusedLocationProviderClient fusedLocationProviderClient;
+
     @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mAllRequests = new ArrayList<>();
         mAllUsers = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
@@ -56,12 +73,12 @@ public class MainActivity extends AppCompatActivity {
             //LogInManager is used for logging out of Facebook
             LoginManager.getInstance().logOut();
             ParseUser.logOutInBackground(e -> {
-                if (e != null){
+                if (e != null) {
                     Log.e(sTAG, "Issue with Logging Out: " + e);
                     return;
                 }
                 ParseUser currentUser = ParseUser.getCurrentUser();
-                if(currentUser == null){
+                if (currentUser == null) {
                     Intent i = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(i);
                 }
@@ -76,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment fragment;
             int slideInAnim, slideOutAnim, popInAnim, popOutAnim;
-            switch (item.getItemId()){
+            switch (item.getItemId()) {
                 case R.id.action_profile:
                     fragment = new ProfileFragment();
                     prevFragment = 1;
@@ -96,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.action_feed:
                 default:
                     fragment = new FeedFragment();
-                    if(prevFragment == 1){
+                    if (prevFragment == 1) {
                         slideInAnim = R.anim.slide_in_left;
                         slideOutAnim = R.anim.slide_out_right;
                         popInAnim = R.anim.slide_in_right;
@@ -110,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             mFragmentManager.beginTransaction()
-                    .setCustomAnimations(slideInAnim,slideOutAnim,
+                    .setCustomAnimations(slideInAnim, slideOutAnim,
                             popInAnim, popOutAnim)
                     .replace(R.id.flMainActivity, fragment).commit();
             return true;
@@ -123,6 +140,41 @@ public class MainActivity extends AppCompatActivity {
         }
         //Default selection for the BottomNavigationView
         bottomNavigationView.setSelectedItemId(R.id.action_feed);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!checkSelfPermission()) {
+            requestLocationPermission();
+        } else {
+            getLastLocation();
+        }
+    }
+
+    private void getLastLocation() {
+        @SuppressLint("MissingPermission")
+        Task<Location> locationTask = fusedLocationProviderClient.getLastLocation();
+
+        locationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if(location != null){
+                    Log.i(sTAG, "onSuccess: " + location.toString());
+                    Log.i(sTAG, "Longitude: " + location.getLongitude());
+                    Log.i(sTAG, "Latitude: " + location.getLatitude());
+                }else{
+                    Log.i(sTAG, "onSuccess: location was null");
+                }
+            }
+        });
+
+        locationTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e(sTAG, "onFailure: ", e);
+            }
+        });
     }
 
     private void addNewFollowers() throws JSONException {
@@ -165,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                         ParseUser newFollower = request.getFollower();
                         AlertDialog.Builder builder =
                                 new AlertDialog.Builder(MainActivity.this).
-                                        setMessage("@" + newFollower.getUsername()).
+                                        setMessage("@" + newFollower.getUsername() + " wants to follow you\"").
                                         setPositiveButton("Accept", (dialog, which) -> {
                                             dialog.dismiss();
                                             request.setStatus(true);
@@ -228,5 +280,32 @@ public class MainActivity extends AppCompatActivity {
             }
             mAllRequests.addAll(objects);
         });
+    }
+
+    private boolean checkSelfPermission(){
+        int result = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int result1 = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
+        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission() {
+        String[] arr = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+        // If it is no the first time the users goes into the app
+        if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)){
+            Log.d(sTAG, "DIALOG ASKING AGAIN");
+        }
+        ActivityCompat.requestPermissions(this, arr, LOCATION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //Permission Granted
+                getLastLocation();
+            }
+        }
     }
 }
