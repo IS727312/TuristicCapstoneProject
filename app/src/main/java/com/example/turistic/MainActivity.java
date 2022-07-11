@@ -4,19 +4,24 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.content.Context;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.ImageButton;
 
@@ -25,10 +30,16 @@ import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.facebook.login.LoginManager;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.parse.ParseQuery;
@@ -44,12 +55,16 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String sTAG = "MainActivity";
     public static final int LOCATION_REQUEST_CODE = 1;
+    public static final int RESOLUTION_REQUEST_CODE = 10;
+    public static final String CHANNEL_ID = "100";
+    public static final String CHANNEL_NAME = "Touristic Notification";
     final FragmentManager mFragmentManager = getSupportFragmentManager();
     private List<ParseUser> mAllUsers;
     private List<FollowersRequestedFollowing> mAllRequests;
     private ParseUser mCurrentUser;
     private int prevFragment = 0;
-    FusedLocationProviderClient fusedLocationProviderClient;
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationRequest locationRequest;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -61,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        locationRequest = LocationRequest.create();
         mAllRequests = new ArrayList<>();
         mAllUsers = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
@@ -68,6 +84,10 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
+
+        locationRequest.setInterval(5000);
+        locationRequest.setFastestInterval(3000);
+        locationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
 
         btnFeedLogOut.setOnClickListener(v -> {
             //LogInManager is used for logging out of Facebook
@@ -134,10 +154,11 @@ public class MainActivity extends AppCompatActivity {
         });
         try {
             addNewFollowers();
-            checkRequests();
+            checkPastsRequests();
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         //Default selection for the BottomNavigationView
         bottomNavigationView.setSelectedItemId(R.id.action_feed);
     }
@@ -145,36 +166,76 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (!checkSelfPermission()) {
+        if (!checkLocationPermissions()) {
             requestLocationPermission();
         } else {
-            getLastLocation();
+            checkSettingsAndStartLocationUpdates();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopLocationUpdates();
     }
 
     private void getLastLocation() {
         @SuppressLint("MissingPermission")
         Task<Location> locationTask = fusedLocationProviderClient.getLastLocation();
 
-        locationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if(location != null){
-                    Log.i(sTAG, "onSuccess: " + location.toString());
-                    Log.i(sTAG, "Longitude: " + location.getLongitude());
-                    Log.i(sTAG, "Latitude: " + location.getLatitude());
-                }else{
-                    Log.i(sTAG, "onSuccess: location was null");
-                }
+        locationTask.addOnSuccessListener(location -> {
+            if (location != null) {
+                Log.i(sTAG, "onSuccess: " + location);
+                Log.i(sTAG, "Longitude: " + location.getLongitude());
+                Log.i(sTAG, "Latitude: " + location.getLatitude());
+            } else {
+                Log.i(sTAG, "onSuccess: location was null");
             }
         });
 
-        locationTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.e(sTAG, "onFailure: ", e);
+        locationTask.addOnFailureListener(e -> Log.e(sTAG, "onFailure: ", e));
+    }
+
+    private void checkSettingsAndStartLocationUpdates() {
+        LocationSettingsRequest request = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest).build();
+        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> locationSettingsResponseTask = settingsClient.checkLocationSettings(request);
+        locationSettingsResponseTask.addOnSuccessListener(locationSettingsResponse -> {
+            //Setting in the device are correct and can get location updates
+            startLocationUpdates();
+        });
+        locationSettingsResponseTask.addOnFailureListener(e -> {
+            //Settings not correct, ask the user for permission
+            if (e instanceof ResolvableApiException) {
+                ResolvableApiException apiException = (ResolvableApiException) e;
+                try {
+                    apiException.startResolutionForResult(MainActivity.this, RESOLUTION_REQUEST_CODE);
+                } catch (IntentSender.SendIntentException sendIntentException) {
+                    sendIntentException.printStackTrace();
+                }
             }
         });
+    }
+
+    LocationCallback locationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(@NonNull LocationResult locationResult) {
+            for (Location location: locationResult.getLocations()){
+                Log.i(sTAG, "onLocationResult: " + location.toString());
+                pushNotification(location.toString());
+
+            }
+
+        }
+    };
+
+    @SuppressLint("MissingPermission")
+    private void startLocationUpdates() {
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+    }
+
+    private void stopLocationUpdates(){
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
     private void addNewFollowers() throws JSONException {
@@ -247,7 +308,9 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    private void checkRequests(){
+    private void checkPastsRequests(){
+        //Checks for past requests sent by the current user
+        //To see their status (accepted, or not responded)
         mAllRequests.clear();
         ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
         queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
@@ -282,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private boolean checkSelfPermission(){
+    private boolean checkLocationPermissions(){
         int result = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
         int result1 = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
         return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
@@ -304,8 +367,21 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 //Permission Granted
-                getLastLocation();
+                checkSettingsAndStartLocationUpdates();
             }
         }
+    }
+
+    private void pushNotification(String location){
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        manager.createNotificationChannel(channel);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_baseline_home_24)
+                .setContentText(location)
+                .setContentTitle("Turistic");
+        Notification notification = builder.build();
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
+        notificationManagerCompat.notify(24 , notification);
     }
 }

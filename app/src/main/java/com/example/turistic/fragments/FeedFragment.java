@@ -85,6 +85,10 @@ public class FeedFragment extends Fragment {
         queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
         queryRequests.addDescendingOrder("createdAt");
         queryRequests.findInBackground((objects, e) -> {
+            if(e != null){
+                Log.e(sTAG, "Issue with getting Requests");
+                return;
+            }
             mQueryRequests.addAll(objects);
         });
     }
