@@ -20,11 +20,16 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.ImageButton;
 
+import com.amadeus.Amadeus;
+import com.amadeus.Params;
+import com.amadeus.exceptions.ResponseException;
+import com.amadeus.resources.PointOfInterest;
 import com.example.turistic.fragments.FeedFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
@@ -65,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
     private int prevFragment = 0;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
+    public static final String CHANNEL_ID_1 = "CustomServiceChannel1";
+    private Amadeus amadeus;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -74,6 +81,11 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setCustomView(R.layout.toolbar_feed_layout);
 
         setContentView(R.layout.activity_main);
+        createNotificationChannel();
+
+         amadeus = Amadeus
+                .builder("FceczHVR3ECcAdSOF3oh0ZP2GSYGhuw2", "8FqmCRs6YrrhxnFW")
+                .build();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         locationRequest = LocationRequest.create();
@@ -222,8 +234,8 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationResult(@NonNull LocationResult locationResult) {
             for (Location location: locationResult.getLocations()){
                 Log.i(sTAG, "onLocationResult: " + location.toString());
-                pushNotification(location.toString());
-
+                //pushNotification(location.toString());
+                new POITask().execute();
             }
 
         }
@@ -383,5 +395,42 @@ public class MainActivity extends AppCompatActivity {
         Notification notification = builder.build();
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
         notificationManagerCompat.notify(24 , notification);
+    }
+
+    private void createNotificationChannel(){
+        NotificationChannel channel1 = new NotificationChannel(
+                CHANNEL_ID_1,
+                "Channel 1",
+                NotificationManager.IMPORTANCE_DEFAULT
+        );
+        channel1.setDescription("This is Channel 1");
+        NotificationManagerCompat manager = NotificationManagerCompat.from(this);
+        manager.createNotificationChannel(channel1);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Bundle bundle = intent.getExtras();
+        bundle.getString("DATA");
+    }
+
+    private class POITask extends AsyncTask<Void, Void, Void>{
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                PointOfInterest[] pointsOfInterest = amadeus.referenceData.locations.pointsOfInterest.bySquare.get(Params
+                        .with("north", "41.397158")
+                        .and("west", "2.160873")
+                        .and("south", "41.394582")
+                        .and("east", "2.177181"));
+                pushNotification(pointsOfInterest[0].getName());
+                Log.i(sTAG, pointsOfInterest[0].getName());
+            } catch (ResponseException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 }
