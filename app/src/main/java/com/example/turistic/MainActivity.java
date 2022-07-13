@@ -16,6 +16,7 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -55,6 +56,7 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,11 +69,16 @@ public class MainActivity extends AppCompatActivity {
     private List<ParseUser> mAllUsers;
     private List<FollowersRequestedFollowing> mAllRequests;
     private ParseUser mCurrentUser;
-    private int prevFragment = 0;
-    private FusedLocationProviderClient fusedLocationProviderClient;
-    private LocationRequest locationRequest;
+    private int mPrevFragment = 0;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+    private LocationRequest mLocationRequest;
     public static final String CHANNEL_ID_1 = "CustomServiceChannel1";
-    private Amadeus amadeus;
+    private Amadeus mAmadeus;
+    private List<PointOfInterest> mPointsOfInterestInUserRadius;
+    private Location mLocation;
+    private boolean mSwitchLocation;
+    private String mLongitude;
+    private String mLatitude;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -83,23 +90,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         createNotificationChannel();
 
-         amadeus = Amadeus
-                .builder("FceczHVR3ECcAdSOF3oh0ZP2GSYGhuw2", "8FqmCRs6YrrhxnFW")
+         mAmadeus = Amadeus
+                .builder("8B5cs7xeAYWhj0YouANbHaXqt62Aodb5", "9zogRFmi4rx9VYCA")
                 .build();
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        locationRequest = LocationRequest.create();
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        mLocationRequest = LocationRequest.create();
         mAllRequests = new ArrayList<>();
         mAllUsers = new ArrayList<>();
+        mPointsOfInterestInUserRadius = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
+        mSwitchLocation = false;
+        mLatitude = "41.3874";
+        mLongitude = "2.1686";
 
         ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(3000);
-        locationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setInterval(5000 * 2);
+        mLocationRequest.setFastestInterval(6000);
+        mLocationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
 
         btnFeedLogOut.setOnClickListener(v -> {
             //LogInManager is used for logging out of Facebook
@@ -128,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.action_profile:
                     fragment = new ProfileFragment();
-                    prevFragment = 1;
+                    mPrevFragment = 1;
                     slideInAnim = R.anim.slide_in_right;
                     slideOutAnim = R.anim.slide_out_left;
                     popInAnim = R.anim.slide_in_left;
@@ -136,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.action_compose:
                     fragment = new ComposeFragment();
-                    prevFragment = 2;
+                    mPrevFragment = 2;
                     slideInAnim = R.anim.slide_in_left;
                     slideOutAnim = R.anim.slide_out_right;
                     popInAnim = R.anim.slide_in_right;
@@ -145,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.action_feed:
                 default:
                     fragment = new FeedFragment();
-                    if (prevFragment == 1) {
+                    if (mPrevFragment == 1) {
                         slideInAnim = R.anim.slide_in_left;
                         slideOutAnim = R.anim.slide_out_right;
                         popInAnim = R.anim.slide_in_right;
@@ -188,12 +199,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        stopLocationUpdates();
     }
 
     private void getLastLocation() {
         @SuppressLint("MissingPermission")
-        Task<Location> locationTask = fusedLocationProviderClient.getLastLocation();
+        Task<Location> locationTask = mFusedLocationProviderClient.getLastLocation();
 
         locationTask.addOnSuccessListener(location -> {
             if (location != null) {
@@ -209,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkSettingsAndStartLocationUpdates() {
-        LocationSettingsRequest request = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest).build();
+        LocationSettingsRequest request = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest).build();
         SettingsClient settingsClient = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> locationSettingsResponseTask = settingsClient.checkLocationSettings(request);
         locationSettingsResponseTask.addOnSuccessListener(locationSettingsResponse -> {
@@ -233,8 +243,19 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onLocationResult(@NonNull LocationResult locationResult) {
             for (Location location: locationResult.getLocations()){
-                Log.i(sTAG, "onLocationResult: " + location.toString());
+                Log.i(sTAG, "onLocationResult - Lat: " + mLatitude + " Lon:" + mLongitude);
+                mLocation = location;
                 //pushNotification(location.toString());
+                if(mSwitchLocation){
+                    mLatitude = "41.3874";
+                    mLongitude = "2.1686";
+                }else{
+                    mLatitude = "41.3884";
+                    mLongitude = "2.1673";
+                }
+                mSwitchLocation = !mSwitchLocation;
+                //Needed for getting the info out of the API,
+                // because it can not be done in the Main Thread
                 new POITask().execute();
             }
 
@@ -243,11 +264,11 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
-        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.getMainLooper());
     }
 
     private void stopLocationUpdates(){
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        mFusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
     private void addNewFollowers() throws JSONException {
@@ -384,17 +405,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void pushNotification(String location){
+    private void pushNotification(String location, PendingIntent pendingIntent, int m){
         NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
         NotificationManager manager = getSystemService(NotificationManager.class);
         manager.createNotificationChannel(channel);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_baseline_home_24)
                 .setContentText(location)
-                .setContentTitle("Turistic");
+                .setContentTitle("Turistic")
+                .setContentIntent(pendingIntent);
         Notification notification = builder.build();
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
-        notificationManagerCompat.notify(24 , notification);
+
+        notificationManagerCompat.notify(m , notification);
     }
 
     private void createNotificationChannel(){
@@ -420,17 +443,61 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                PointOfInterest[] pointsOfInterest = amadeus.referenceData.locations.pointsOfInterest.bySquare.get(Params
-                        .with("north", "41.397158")
-                        .and("west", "2.160873")
-                        .and("south", "41.394582")
-                        .and("east", "2.177181"));
-                pushNotification(pointsOfInterest[0].getName());
-                Log.i(sTAG, pointsOfInterest[0].getName());
+                PointOfInterest[] pointsOfInterest = mAmadeus.referenceData.locations.pointsOfInterest.get(Params
+                        .with("latitude", mLatitude)
+                        .and("longitude", mLongitude)
+                        .and("radius", 1));
+                for(PointOfInterest point : pointsOfInterest){
+                    Log.i(sTAG, point.getName() + " AlreadyInRadius:  " + !alreadyInRadius(point));
+                    if(!alreadyInRadius(point)){
+                        // Create an explicit intent for an Activity in your app
+                        Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+                        intent.putExtra("query", point.getName());
+                        intent.setFlags(   Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        //Random is used to pass a different id for each notification
+                        //Pass the correct information to the query
+                        Random random = new Random();
+                        int m = random.nextInt(9999 - 1000) + 1000;
+                        PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, m , intent, PendingIntent.FLAG_IMMUTABLE);
+                        mPointsOfInterestInUserRadius.add(point);
+                        pushNotification(point.getName(), pendingIntent, m);
+                    }
+                }
+                mPointsOfInterestInUserRadius.removeIf(point -> noLongerInRadius(point, pointsOfInterest));
+                Log.i(sTAG, "ARRAYLIST POIS");
+                for(PointOfInterest p: mPointsOfInterestInUserRadius){
+                    Log.i(sTAG, p.getName());
+                }
+                Log.i(sTAG,"POIS: "+pointsOfInterest.length);
+
             } catch (ResponseException e) {
                 e.printStackTrace();
             }
             return null;
         }
+
+        private boolean noLongerInRadius(PointOfInterest point, PointOfInterest[] pointsOfInterest) {
+            for(PointOfInterest poi: pointsOfInterest){
+                if(point.getName().equals(poi.getName())){
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+        private boolean alreadyInRadius(PointOfInterest point) {
+            boolean result = false;
+            if(mPointsOfInterestInUserRadius != null){
+                for(PointOfInterest poi: mPointsOfInterestInUserRadius){
+                    if(poi.getName().equals(point.getName())){
+                        result = true;
+                    }
+                }
+            }
+            return result;
+        }
+
     }
+
 }

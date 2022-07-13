@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.text.Editable;
@@ -47,6 +48,8 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
+        onNewIntent(getIntent());
+
         mCurrentUser = ParseUser.getCurrentUser();
         mEtTitleToSearch = findViewById(R.id.etTitleToSearch);
         RecyclerView rvSearchPosts = findViewById(R.id.rvSearchPosts);
@@ -73,9 +76,7 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mSearchQuery = mEtTitleToSearch.getText().toString().toLowerCase(Locale.ROOT);
-                getPosts();
-                getUsers();
-                getRequests();
+                doQuery();
             }
 
             @Override
@@ -280,5 +281,26 @@ public class SearchActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    private void doQuery(){
+        Log.i(sTAG, mSearchQuery);
+        getPosts();
+        getUsers();
+        getRequests();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Bundle extras = intent.getExtras();
+        if(extras != null){
+            if(extras.containsKey("query"))
+            {
+                mSearchQuery = extras.getString("query").toLowerCase(Locale.ROOT);
+                Log.i(sTAG, mSearchQuery);
+                doQuery();
+            }
+        }
     }
 }
