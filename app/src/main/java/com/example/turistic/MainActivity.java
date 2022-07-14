@@ -201,23 +201,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
     }
 
-    private void getLastLocation() {
-        @SuppressLint("MissingPermission")
-        Task<Location> locationTask = mFusedLocationProviderClient.getLastLocation();
-
-        locationTask.addOnSuccessListener(location -> {
-            if (location != null) {
-                Log.i(sTAG, "onSuccess: " + location);
-                Log.i(sTAG, "Longitude: " + location.getLongitude());
-                Log.i(sTAG, "Latitude: " + location.getLatitude());
-            } else {
-                Log.i(sTAG, "onSuccess: location was null");
-            }
-        });
-
-        locationTask.addOnFailureListener(e -> Log.e(sTAG, "onFailure: ", e));
-    }
-
     private void checkSettingsAndStartLocationUpdates() {
         LocationSettingsRequest request = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest).build();
         SettingsClient settingsClient = LocationServices.getSettingsClient(this);
@@ -256,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 mSwitchLocation = !mSwitchLocation;
                 //Needed for getting the info out of the API,
                 // because it can not be done in the Main Thread
-                new POITask().execute();
+                //new POITask().execute();
             }
 
         }
@@ -362,19 +345,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        });
-    }
-
-    private void getRequests(){
-        ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
-        queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
-        queryRequests.addDescendingOrder("createdAt");
-        queryRequests.findInBackground((objects, e) -> {
-            if (e != null) {
-                Log.e(sTAG, "Issue with getting requests", e);
-                return;
-            }
-            mAllRequests.addAll(objects);
         });
     }
 
@@ -485,7 +455,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-
         private boolean alreadyInRadius(PointOfInterest point) {
             boolean result = false;
             if(mPointsOfInterestInUserRadius != null){
@@ -497,7 +466,5 @@ public class MainActivity extends AppCompatActivity {
             }
             return result;
         }
-
     }
-
 }

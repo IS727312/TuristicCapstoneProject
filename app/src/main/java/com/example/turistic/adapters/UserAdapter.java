@@ -1,6 +1,8 @@
 package com.example.turistic.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,12 +11,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.turistic.R;
+import com.example.turistic.UserDetailsActivity;
 import com.parse.ParseFile;
 import com.parse.ParseUser;
+
+import org.parceler.Parcels;
 
 import java.util.List;
 
@@ -65,7 +71,15 @@ public class UserAdapter  extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
 
         @Override
         public void onClick(View v) {
-            Log.i(sTAG, "Post Clicked");
+            int position = getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                ParseUser user = mUsers.get(position);
+                Intent intent = new Intent(mContext, UserDetailsActivity.class);
+                // serialize the movie using parceler, use its short name as a key
+                intent.putExtra(ParseUser.class.getSimpleName(), Parcels.wrap(user));
+                mContext.startActivity(intent);
+                Log.i(sTAG, "Post Clicked");
+            }
         }
 
 

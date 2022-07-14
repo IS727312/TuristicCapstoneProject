@@ -58,12 +58,12 @@ public class ProfileFragment extends Fragment {
         mFollowers = mUser.getJSONArray("followers");
         mFollowing = mUser.getJSONArray("following");
         ParseFile profilePicture = ParseUser.getCurrentUser().getParseFile("profilePicture");
-        RecyclerView rvProfilePosts = view.findViewById(R.id.rvProfilePosts);
+        RecyclerView rvProfilePosts = view.findViewById(R.id.rvUserDetailsPosts);
 
-        ImageView ivProfileProfilePicture = view.findViewById(R.id.ivProfileProfilePicture);
-        TextView tvProfileFollowers = view.findViewById(R.id.tvProfileFollowers);
-        TextView tvProfileFollowing = view.findViewById(R.id.tvProfileFollowing);
-        TextView tvProfileUsername = view.findViewById(R.id.tvProfileUsername);
+        ImageView ivProfileProfilePicture = view.findViewById(R.id.ivUserDetailsProfilePicture);
+        TextView tvProfileFollowers = view.findViewById(R.id.tvUserDetailsFollowers);
+        TextView tvProfileFollowing = view.findViewById(R.id.tvUserDetailsFollowing);
+        TextView tvProfileUsername = view.findViewById(R.id.tvUserDetailsUsername);
         ImageButton iBtnEdit = view.findViewById(R.id.iBtnEdit);
         int totalFollowers;
         int totalFollowing;
