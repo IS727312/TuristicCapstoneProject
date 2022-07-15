@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(sTAG, "onLocationResult - Lat: " + mLatitude + " Lon:" + mLongitude);
                 mLocation = location;
                 //pushNotification(location.toString());
-                // TODO rename as mUseFakeLocation1
+                // TODO: rename as mUseFakeLocation1, also add some comments for this variable
                 if(mSwitchLocation){
                     mLatitude = "41.3874";
                     mLongitude = "2.1686";
