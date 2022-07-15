@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import com.parse.ParseUser;
 
+import es.dmoral.toasty.Toasty;
+
 public class SignupActivity extends AppCompatActivity {
 
     public static final String sTAG = "SignupActivity";
@@ -43,13 +45,13 @@ public class SignupActivity extends AppCompatActivity {
 
             if(username.isEmpty() || pass.isEmpty() ||confirmPass.isEmpty() || name.isEmpty() || lastName.isEmpty()){
                 Log.e(sTAG, "There are empty fills");
-                Toast.makeText(SignupActivity.this, "There are empty fills", Toast.LENGTH_SHORT).show();
+                Toasty.error(SignupActivity.this, "There are empty fills", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if(!pass.equals(confirmPass)){
                 Log.e(sTAG, "Passwords don't match");
-                Toast.makeText(SignupActivity.this, "Passwords don't match", Toast.LENGTH_SHORT).show();
+                Toasty.error(SignupActivity.this, "Passwords don't match", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -61,6 +63,7 @@ public class SignupActivity extends AppCompatActivity {
             newUser.signUpInBackground(e -> {
                 if(e == null){
                     Intent i = new Intent(SignupActivity.this, MainActivity.class);
+                    Toasty.success(SignupActivity.this, "Successfully sign up", Toast.LENGTH_SHORT).show();
                     startActivity(i);
                 } else {
                     Log.e(sTAG, "Error with signing up" + e);

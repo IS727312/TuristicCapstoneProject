@@ -23,6 +23,8 @@ import org.json.JSONException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import es.dmoral.toasty.Toasty;
+
 public class LoginActivity extends AppCompatActivity {
 
     public static final String sTAG = "LoginActivity";
@@ -71,16 +73,16 @@ public class LoginActivity extends AppCompatActivity {
                     dialog.dismiss();
                     if (err != null) {
                         Log.e(sTAG, "done: ", err);
-                        Toast.makeText(LoginActivity.this, err.getMessage(), Toast.LENGTH_LONG).show();
+                        Toasty.error(LoginActivity.this, err.getMessage(), Toast.LENGTH_LONG).show();
                     } else if (user == null) {
-                        Toast.makeText(LoginActivity.this, "The user cancelled the Facebook login.", Toast.LENGTH_LONG).show();
+                        Toasty.error(LoginActivity.this, "The user cancelled the Facebook login.", Toast.LENGTH_LONG).show();
                         Log.d(sTAG, "Uh oh. The user cancelled the Facebook login.");
                     } else if (user.isNew()) {
-                        Toast.makeText(LoginActivity.this, "User signed up and logged in through Facebook.", Toast.LENGTH_LONG).show();
+                        Toasty.success(LoginActivity.this, "User signed up and logged in through Facebook.", Toast.LENGTH_LONG).show();
                         Log.d(sTAG, "User signed up and logged in through Facebook!");
                         getUserDetailFromFB();
                     } else {
-                        Toast.makeText(LoginActivity.this, "User logged in through Facebook.", Toast.LENGTH_LONG).show();
+                        Toasty.success(LoginActivity.this, "User logged in through Facebook.", Toast.LENGTH_LONG).show();
                         Log.d(sTAG, "User logged in through Facebook!");
                         goFeedActivity();
                     }
@@ -93,11 +95,11 @@ public class LoginActivity extends AppCompatActivity {
         ParseUser.logInInBackground(username, password, (user, e) -> {
             if(e != null){
                 Log.e(sTAG, "Issue with Login: ", e);
-                Toast.makeText(LoginActivity.this, "Issue with Login", Toast.LENGTH_SHORT).show();
+                Toasty.error(LoginActivity.this, "Issue with Login", Toast.LENGTH_SHORT).show();
                 return;
             }
+            Toasty.success(LoginActivity.this, "Success", Toast.LENGTH_SHORT).show();
             goFeedActivity();
-            Toast.makeText(LoginActivity.this, "Success", Toast.LENGTH_SHORT).show();
         });
     }
 
