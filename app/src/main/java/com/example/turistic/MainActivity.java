@@ -58,9 +58,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+// TODO: class documentation
 public class MainActivity extends AppCompatActivity {
 
-    public static final String sTAG = "MainActivity";
+    public static final String TAG = "MainActivity";
     public static final int LOCATION_REQUEST_CODE = 1;
     public static final int RESOLUTION_REQUEST_CODE = 10;
     public static final String CHANNEL_ID = "100";
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private int mPrevFragment = 0;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private LocationRequest mLocationRequest;
+    // TODO: remove _1
     public static final String CHANNEL_ID_1 = "CustomServiceChannel1";
     private Amadeus mAmadeus;
     private List<PointOfInterest> mPointsOfInterestInUserRadius;
@@ -229,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(sTAG, "onLocationResult - Lat: " + mLatitude + " Lon:" + mLongitude);
                 mLocation = location;
                 //pushNotification(location.toString());
+                // TODO rename as mUseFakeLocation1
                 if(mSwitchLocation){
                     mLatitude = "41.3874";
                     mLongitude = "2.1686";
@@ -254,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
         mFusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
+    // TODO: comment
     private void addNewFollowers() throws JSONException {
         if(mCurrentUser.getBoolean("anyoneCanFollow")) {
             ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
