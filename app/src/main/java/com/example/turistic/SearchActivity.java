@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import es.dmoral.toasty.Toasty;
+
 public class SearchActivity extends AppCompatActivity {
     public static final String sTAG = "SearchActivity";
     private PostAdapter mAdapter;
@@ -70,7 +72,6 @@ public class SearchActivity extends AppCompatActivity {
         mEtTitleToSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
             }
 
             @Override
@@ -86,10 +87,8 @@ public class SearchActivity extends AppCompatActivity {
                 mQueryRequests.clear();
             }
         });
-
-        new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvSearchUsers);
+        new ItemTouchHelper(userCallBack).attachToRecyclerView(rvSearchUsers);
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvSearchPosts);
-
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -173,43 +172,31 @@ public class SearchActivity extends AppCompatActivity {
             if(position != RecyclerView.NO_POSITION){
                 Post post = mQueryPosts.get(position);
                 ParseUser postOwner = post.getOwner();
-
-                if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
-                    if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
-                        if(postOwner.getBoolean("anyoneCanFollow")) {
-                            Toast.makeText(SearchActivity.this, "Following user" + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
-                            mCurrentUser.add("following", postOwner);
-                            mCurrentUser.saveInBackground(e -> {
-                                if (e != null) {
-                                    Log.e(sTAG, "Could not add user", e);
-                                    return;
-                                }
-                                Log.i(sTAG, "Follower added successfully");
-                            });
-                        }else {
-                            FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
-                            frf.setFollower(mCurrentUser);
-                            frf.setRequestedFollowing(postOwner);
-                            frf.saveInBackground(e -> {
-                                if (e != null) {
-                                    Log.e(sTAG, "Could not add user", e);
-                                    return;
-                                }
-                                Toast.makeText(SearchActivity.this, "Request sent", Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                    }else {
-                        if(alreadyRequested(postOwner)){
-                            Toast.makeText(SearchActivity.this, "Request already sent", Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toast.makeText(SearchActivity.this, "User already followed", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }else{
-                    Toast.makeText(SearchActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
-                }
+                followUser(postOwner);
             }
             mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+        }
+
+        @Override
+        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            //Limit the distance of the swipe
+            super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
+        }
+    };
+
+    ItemTouchHelper.SimpleCallback userCallBack = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            int position = viewHolder.getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                ParseUser user = mQueryUsers.get(position);
+                followUser(user);
+            }
             mUserAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
         }
 
@@ -301,6 +288,43 @@ public class SearchActivity extends AppCompatActivity {
                 Log.i(sTAG, mSearchQuery);
                 doQuery();
             }
+        }
+    }
+
+    private void followUser(ParseUser postOwner){
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
+                FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
+                frf.setFollower(mCurrentUser);
+                frf.setRequestedFollowing(postOwner);
+                frf.saveInBackground(e -> {
+                    if (e != null) {
+                        Log.e(sTAG, "Could not add user", e);
+                        return;
+                    }
+                });
+                if(postOwner.getBoolean("anyoneCanFollow")) {
+                    mCurrentUser.add("following", postOwner);
+                    mCurrentUser.saveInBackground(e -> {
+                        if (e != null) {
+                            Log.e(sTAG, "Could not add user", e);
+                            return;
+                        }
+                        Log.i(sTAG, "Follower added successfully");
+                    });
+                    Toasty.success(SearchActivity.this, "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }else{
+                    Toasty.success(SearchActivity.this, "Request sent", Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                if(alreadyRequested(postOwner)){
+                    Toast.makeText(SearchActivity.this, "Request already sent", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(SearchActivity.this, "User already followed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }else{
+            Toast.makeText(SearchActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
         }
     }
 }
