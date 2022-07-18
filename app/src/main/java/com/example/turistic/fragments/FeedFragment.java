@@ -32,6 +32,8 @@ import com.parse.ParseUser;
 import java.util.ArrayList;
 import java.util.List;
 
+import es.dmoral.toasty.Toasty;
+
 public class FeedFragment extends Fragment {
 
     public static final String sTAG = "FeedFragment";
@@ -185,11 +187,18 @@ public class FeedFragment extends Fragment {
             if(position != RecyclerView.NO_POSITION){
                 Post post = mAllPosts.get(position);
                 ParseUser postOwner = post.getOwner();
-
                 if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
                     if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
+                        FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
+                        frf.setFollower(mCurrentUser);
+                        frf.setRequestedFollowing(postOwner);
+                        frf.saveInBackground(e -> {
+                            if (e != null) {
+                                Log.e(sTAG, "Could not add user", e);
+                                return;
+                            }
+                        });
                         if(postOwner.getBoolean("anyoneCanFollow")) {
-                            Toast.makeText(getContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
                             mCurrentUser.add("following", postOwner);
                             mCurrentUser.saveInBackground(e -> {
                                 if (e != null) {
@@ -198,17 +207,9 @@ public class FeedFragment extends Fragment {
                                 }
                                 Log.i(sTAG, "Follower added successfully");
                             });
-                        }else {
-                            FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
-                            frf.setFollower(mCurrentUser);
-                            frf.setRequestedFollowing(postOwner);
-                            frf.saveInBackground(e -> {
-                                if (e != null) {
-                                    Log.e(sTAG, "Could not add user", e);
-                                    return;
-                                }
-                                Toast.makeText(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
-                            });
+                            Toasty.success(getContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toasty.success(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
                         }
                     }else {
                         if(alreadyRequested(postOwner)){

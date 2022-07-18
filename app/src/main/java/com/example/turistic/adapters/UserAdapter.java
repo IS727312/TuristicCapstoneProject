@@ -86,25 +86,7 @@ public class UserAdapter  extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
             int position = getAdapterPosition();
             if(position != RecyclerView.NO_POSITION){
                 ParseUser user = mUsers.get(position);
-                switch (user.getInt("profileMode")){
-                    case PUBLIC:
-                        goToUserDetails(user);
-                        break;
-                    case FOLLOWERS_ONLY:
-                        if(isFollowing(user)){
-                            goToUserDetails(user);
-                        }else{
-                            Toasty.error(itemView.getContext(), "You are not following this user", Toast.LENGTH_SHORT).show();
-                        }
-                        break;
-                    case FRIENDS_ONLY:
-                        if(isFollowing(user) && isFollowedBy(user)){
-                            goToUserDetails(user);
-                        }else {
-                            Toasty.error(itemView.getContext(), "You are not friends with this user", Toast.LENGTH_SHORT).show();
-                        }
-                        break;
-                }
+                goToUserDetails(user);
 
             }
         }
@@ -126,30 +108,6 @@ public class UserAdapter  extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
             // serialize the movie using parceler, use its short name as a key
             intent.putExtra(ParseUser.class.getSimpleName(), Parcels.wrap(user));
             mContext.startActivity(intent);
-        }
-
-        private boolean isFollowing(ParseUser owner) {
-            ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
-            if(followingList != null){
-                for(ParseUser user: followingList){
-                    if(user.getObjectId().equals(owner.getObjectId())){
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private boolean isFollowedBy(ParseUser owner) {
-            ArrayList<ParseUser> postOwnerFollowingList = (ArrayList) owner.get("following");
-            if(postOwnerFollowingList != null){
-                for(ParseUser user: postOwnerFollowingList){
-                    if(mCurrentUser.getObjectId().equals(user.getObjectId())){
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
     }
 }

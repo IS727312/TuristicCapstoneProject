@@ -24,27 +24,23 @@
         android:id="@+id/tvUserDetailsFollowers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="72dp"
-        android:layout_marginTop="191dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="195dp"
+        android:layout_toEndOf="@+id/btnUserDetailsFollowStatus"
+        android:textSize="20sp"
         tools:text="Followers: 0" />
 
-    <TextView
-        android:id="@+id/tvUserDetailsFollowing"
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/btnUserDetailsFollowStatus"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="130dp"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginStart="103dp"
-        android:layout_marginTop="190dp"
-        android:layout_marginEnd="74dp"
-        android:layout_toEndOf="@+id/tvUserDetailsFollowers"
-        android:ellipsize="marquee"
-        android:lines="1"
-        android:singleLine="true"
-        tools:text="Following: 0" />
+        android:layout_marginStart="70dp"
+        android:layout_marginTop="183dp"
+        tools:ignore="SpeakableTextPresentCheck,SpeakableTextPresentCheck" />
 
     <TextView
         android:id="@+id/tvUserDetailsUsername"
@@ -57,17 +53,31 @@
         android:layout_marginTop="10dp"
         tools:text="USRN" />
 
+    <TextView
+        android:id="@+id/tvUserDetailsPostStatus"
+        android:layout_width="match_parent"
+        android:layout_height="212dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="239dp"
+        android:layout_marginEnd="-9dp"
+        android:text="@string/user_posts_are_private"
+        android:textSize="34sp"
+        android:visibility="invisible" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvUserDetailsPosts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@+id/btnUserDetailsFollowStatus"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="-2dp"
-        android:layout_marginTop="214dp"
-        android:layout_marginEnd="-1dp"
-        android:layout_marginBottom="0dp" />
+        android:layout_marginStart="-3dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="-17dp" />
 
 </RelativeLayout>

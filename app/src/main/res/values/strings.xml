@@ -47,4 +47,7 @@
     <string name="anyone_can_follow">Anyone can follow you?</string>
     <string name="channel_name">Turistic Notification</string>
     <string name="channel_description">Notifications for the Turistic App</string>
+    <string name="FollowStatus1">Followed</string>
+    <string name="FollowStatus2">Follow</string>
+    <string name="user_posts_are_private">User Posts are Private</string>
 </resources>

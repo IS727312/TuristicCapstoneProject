@@ -66,13 +66,11 @@ public class MainActivity extends AppCompatActivity {
     public static final String CHANNEL_ID = "100";
     public static final String CHANNEL_NAME = "Touristic Notification";
     final FragmentManager mFragmentManager = getSupportFragmentManager();
-    private List<ParseUser> mAllUsers;
     private List<FollowersRequestedFollowing> mAllRequests;
     private ParseUser mCurrentUser;
     private int mPrevFragment = 0;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private LocationRequest mLocationRequest;
-    public static final String CHANNEL_ID_1 = "CustomServiceChannel1";
     private Amadeus mAmadeus;
     private List<PointOfInterest> mPointsOfInterestInUserRadius;
     private Location mLocation;
@@ -97,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mLocationRequest = LocationRequest.create();
         mAllRequests = new ArrayList<>();
-        mAllUsers = new ArrayList<>();
         mPointsOfInterestInUserRadius = new ArrayList<>();
         mCurrentUser = ParseUser.getCurrentUser();
         mSwitchLocation = false;
@@ -108,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        mLocationRequest.setInterval(5000 * 2);
+        mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(6000);
         mLocationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
 
@@ -255,30 +252,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addNewFollowers() throws JSONException {
-        if(mCurrentUser.getBoolean("anyoneCanFollow")) {
-            ParseQuery<ParseUser> query = ParseQuery.getQuery(ParseUser.class);
-            query.addDescendingOrder("createdAt");
-            query.findInBackground((objects, e) -> {
-                if (e != null) {
-                    Log.e(sTAG, "Issue with getting new followers", e);
-                    return;
-                }
-                mAllUsers.addAll(objects);
-                for (ParseUser user : mAllUsers) {
-                    ArrayList<ParseUser> userFollowingList = (ArrayList) user.get("following");
-                    if (userFollowingList != null) {
-                        for (int i = 0; i < userFollowingList.size(); i++) {
-                            if (userFollowingList.get(i).getObjectId().equals(mCurrentUser.getObjectId()) &&
-                                    !isAlreadyFollowed(user)) {
-                                mCurrentUser.add("followers", user);
-                                mCurrentUser.saveInBackground();
-                            }
-                        }
-                    }
-
-                }
-            });
-        }else{
             ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
             queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
             queryRequests.addDescendingOrder("createdAt");
@@ -288,40 +261,32 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 mAllRequests.addAll(objects);
-
                 for (FollowersRequestedFollowing request : mAllRequests) {
                     if (request.getRequestedFollowing().getObjectId().equals(mCurrentUser.getObjectId())) {
                         ParseUser newFollower = request.getFollower();
-                        AlertDialog.Builder builder =
-                                new AlertDialog.Builder(MainActivity.this).
-                                        setMessage("@" + newFollower.getUsername() + " wants to follow you\"").
-                                        setPositiveButton("Accept", (dialog, which) -> {
-                                            dialog.dismiss();
-                                            request.setStatus(true);
-                                            request.saveInBackground();
-                                            mCurrentUser.add("followers", newFollower);
-                                        }).
-                                        setNegativeButton("Decline", (dialog, which) -> {
-                                            dialog.dismiss();
-                                            request.deleteInBackground(e1 -> Log.i(sTAG, "Request Declined"));
-                                        });
-                        builder.create().show();
+                        if(!mCurrentUser.getBoolean("anyoneCanFollow")) {
+                            AlertDialog.Builder builder =
+                                    new AlertDialog.Builder(MainActivity.this).
+                                            setMessage("@" + newFollower.getUsername() + " wants to follow you\"").
+                                            setPositiveButton("Accept", (dialog, which) -> {
+                                                dialog.dismiss();
+                                                request.setStatus(true);
+                                                request.saveInBackground();
+                                                mCurrentUser.add("followers", newFollower);
+                                            }).
+                                            setNegativeButton("Decline", (dialog, which) -> {
+                                                dialog.dismiss();
+                                                request.deleteInBackground(e1 -> Log.i(sTAG, "Request Declined"));
+                                            });
+                            builder.create().show();
+                        }else{
+                            mCurrentUser.add("followers", newFollower);
+                            mCurrentUser.saveInBackground();
+                            request.deleteInBackground();
+                        }
                     }
             }
             });
-        }
-    }
-
-    private boolean isAlreadyFollowed(ParseUser user){
-        ArrayList<ParseUser> followersList = (ArrayList) mCurrentUser.get("followers");
-        if(followersList != null) {
-            for (ParseUser follower : followersList) {
-                if (user.getObjectId().equals(follower.getObjectId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private void checkPastsRequests(){
@@ -392,11 +357,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void createNotificationChannel(){
         NotificationChannel channel1 = new NotificationChannel(
-                CHANNEL_ID_1,
+                CHANNEL_ID,
                 "Channel 1",
                 NotificationManager.IMPORTANCE_DEFAULT
         );
-        channel1.setDescription("This is Channel 1");
+        channel1.setDescription("This is Channel for notifications");
         NotificationManagerCompat manager = NotificationManagerCompat.from(this);
         manager.createNotificationChannel(channel1);
     }
@@ -456,15 +421,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private boolean alreadyInRadius(PointOfInterest point) {
-            boolean result = false;
             if(mPointsOfInterestInUserRadius != null){
                 for(PointOfInterest poi: mPointsOfInterestInUserRadius){
                     if(poi.getName().equals(point.getName())){
-                        result = true;
+                        return true;
                     }
                 }
             }
-            return result;
+            return false;
         }
     }
 }
