@@ -1,4 +1,4 @@
-package com.example.turistic;
+package com.example.turistic.utility;
 
 import android.graphics.Bitmap;
 

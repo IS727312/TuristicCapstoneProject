@@ -83,5 +83,16 @@
         android:contentDescription="@string/post_of_the_picture"
         android:visibility="visible"
         tools:srcCompat="@tools:sample/avatars" />
+
+    <RatingBar
+        android:id="@+id/rbRating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="258dp"
+        android:layout_marginEnd="127dp"
+        android:contentDescription="@string/profile" />
+
 </RelativeLayout>
 </androidx.cardview.widget.CardView>

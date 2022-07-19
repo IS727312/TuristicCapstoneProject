@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -28,14 +27,13 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.turistic.utility.UtilityMethods;
 import com.parse.ParseFile;
 import com.parse.ParseUser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+
+import es.dmoral.toasty.Toasty;
 
 public class EditUserInformationActivity extends AppCompatActivity {
 
@@ -69,6 +67,7 @@ public class EditUserInformationActivity extends AppCompatActivity {
         mUser = ParseUser.getCurrentUser();
         Button btnEditSave = findViewById(R.id.btnEditSave);
 
+        //mUtilityMethods = new UtilityMethods(mPhotoFile, mPhotoFileName, mIvEditProfilePicture);
 
         mSpnEditPrivacyMode = findViewById(R.id.spnEditPrivacyMode);
         mPrivacyModeValue = 0;
@@ -134,9 +133,9 @@ public class EditUserInformationActivity extends AppCompatActivity {
                 mUser.put("profilePicture",new ParseFile(mPhotoFile));
             }
             if(mPrivacyModeValue == -1){
-                Toast.makeText(EditUserInformationActivity.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
+                Toasty.error(EditUserInformationActivity.this, "Privacy Mode not selected", Toast.LENGTH_SHORT).show();
             }else if(mFollowingModeValues == -1){
-                Toast.makeText(EditUserInformationActivity.this, "Following Mode not selected", Toast.LENGTH_SHORT).show();
+                Toasty.error(EditUserInformationActivity.this, "Following Mode not selected", Toast.LENGTH_SHORT).show();
             } else {
                 mUser.put("profileMode", mPrivacyModeValue);
                 mUser.put("anyoneCanFollow", mFollowingMode);
@@ -144,7 +143,7 @@ public class EditUserInformationActivity extends AppCompatActivity {
                     if (e != null) {
                         Log.e(sTAG, "Issue with updating data");
                     }
-                    Toast.makeText(EditUserInformationActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
+                    Toasty.success(EditUserInformationActivity.this, "Data updated successfully", Toast.LENGTH_SHORT).show();
                     Intent i = new Intent(EditUserInformationActivity.this, MainActivity.class);
                     startActivity(i);
                 });
@@ -173,63 +172,19 @@ public class EditUserInformationActivity extends AppCompatActivity {
 
     }
 
-    public Bitmap loadFromUri(Uri photoUri) {
-        Bitmap image = null;
-        try {
-            // check version of Android on device
-            // on newer versions of Android, use the new decodeBitmap method
-            ImageDecoder.Source source = ImageDecoder.createSource(EditUserInformationActivity.this.getContentResolver(), photoUri);
-            image = ImageDecoder.decodeBitmap(source);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return image;
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == sSELECT_PICTURE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-
                 assert data != null;
                 Uri photoUri = data.getData();
+                Bitmap selectedImage = UtilityMethods.loadFromUri(photoUri, EditUserInformationActivity.this);
 
-                // Load the image located at photoUri into selectedImage
-                Bitmap selectedImage = loadFromUri(photoUri);
-
-                //create a file to write bitmap data
-                File f = new File(EditUserInformationActivity.this.getCacheDir(), mPhotoFileName);
-                try {
-                    f.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                //Convert bitmap to byte array
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                selectedImage.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-                byte[] bitmapdata = bos.toByteArray();
-
-                //write the bytes in file
-                FileOutputStream fos = null;
-
-                try {
-                    fos = new FileOutputStream(f);
-                    fos.write(bitmapdata);
-                    fos.flush();
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                mPhotoFile = f;
+                mPhotoFile = UtilityMethods.submitPictureFromGallery(EditUserInformationActivity.this, mPhotoFileName, selectedImage);
 
                 mIvEditProfilePicture.setImageBitmap(selectedImage);
             }
         }
     }
-
 }

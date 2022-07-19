@@ -71,13 +71,24 @@
         android:autofillHints=""
         android:minLines="5"
         />
+
     <Button
         android:id="@+id/btnComposeSubmitPost"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
         android:text="@string/post"
-        app:layout_constraintTop_toBottomOf="@id/etComposeCaption"
-        />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rbComposeRating" />
+
+    <RatingBar
+        android:id="@+id/rbComposeRating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/rating"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.04"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etComposeCaption" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

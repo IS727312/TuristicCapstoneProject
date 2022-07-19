@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -52,6 +53,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private ImageView mIvPostPicture;
         private TextView mTvUsername;
         private TextView mTvTitle;
+        private RatingBar mRbRating;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -59,6 +61,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             mTvTitle = itemView.findViewById(R.id.tvTitle);
             mIvPostPicture = itemView.findViewById(R.id.ivPostPicture);
             mIvProfilePicture = itemView.findViewById(R.id.ivProfilePicture);
+            mRbRating = itemView.findViewById(R.id.rbRating);
             itemView.setOnClickListener(this);
         }
 
@@ -72,6 +75,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             //tvCaption.setText(post.getCaption());
             mTvTitle.setText(post.getTitle());
             mTvUsername.setText(post.getOwner().getUsername());
+            mRbRating.setRating(post.getRating());
             ParseFile postImage = post.getPicture();
             ParseFile profileImage = post.getOwner().getParseFile("profilePicture");
             if(postImage != null){
@@ -80,6 +84,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             if(profileImage != null){
                 Glide.with(mContext).load(profileImage.getUrl()).into(mIvProfilePicture);
             }
+
         }
     }
 }

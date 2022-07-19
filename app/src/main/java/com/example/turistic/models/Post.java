@@ -1,5 +1,6 @@
 package com.example.turistic.models;
 
+import android.content.Intent;
 import android.util.Log;
 
 import com.parse.ParseClassName;
@@ -17,6 +18,7 @@ public class Post extends ParseObject {
     public static final String sKEY_PICTURE = "picture";
     public static final String sKEY_OWNER = "owner";
     public static final String sKEY_TITLE = "title";
+    public static final String sKEY_RATING = "rating";
 
     public String getCaption() {return getString(sKEY_CAPTION); }
     public void setCaption(String caption) {put(sKEY_CAPTION, caption); }
@@ -26,6 +28,8 @@ public class Post extends ParseObject {
     public void setOwner(ParseUser owner) {put(sKEY_OWNER, owner); }
     public String getTitle() {return getString(sKEY_TITLE); }
     public void setTitle(String title) {put(sKEY_TITLE, title); }
+    public float getRating() {return getNumber(sKEY_RATING).floatValue();}
+    public void setRating(float rating) {put(sKEY_RATING, rating);}
 
     public String getRelativeTimeAgo(Date createdAt) {
         final int SECOND_MILLIS = 1000;

@@ -5,7 +5,6 @@ import static android.app.Activity.RESULT_OK;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -16,7 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,20 +23,20 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.Toast;
 
-import com.example.turistic.BitmapScaler;
 import com.example.turistic.MainActivity;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
+import com.example.turistic.utility.UtilityMethods;
 import com.parse.ParseFile;
 import com.parse.ParseUser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+
+import es.dmoral.toasty.Toasty;
 
 public class ComposeFragment extends Fragment {
 
@@ -49,7 +47,9 @@ public class ComposeFragment extends Fragment {
     private ImageView mIvComposePictureToPost;
     private EditText mEtComposeCaption;
     private File mPhotoFile;
+    private RatingBar mRbComposeRating;
     public String mPhotoFileName = "photo.jpg";
+    private float mStarRating;
 
     public ComposeFragment() {
         // Required empty public constructor
@@ -64,13 +64,20 @@ public class ComposeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Log.i(sTAG, "COMPOSE FRAGMENT");
         Button btnComposeSubmitPicture = view.findViewById(R.id.btnComposeSubmitPicture);
         Button btnComposeSubmitPost = view.findViewById(R.id.btnComposeSubmitPost);
         Button btnComposeTakePicture = view.findViewById(R.id.btnComposeTakePicture);
         mEtComposeTitle = view.findViewById(R.id.etComposeTitle);
         mEtComposeCaption = view.findViewById(R.id.etComposeCaption);
         mIvComposePictureToPost = view.findViewById(R.id.ivComposePictureToPost);
+        mRbComposeRating = view.findViewById(R.id.rbComposeRating);
+
+        mRbComposeRating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                mStarRating = rating;
+            }
+        });
 
         btnComposeTakePicture.setOnClickListener(v -> launchCamera());
 
@@ -78,14 +85,14 @@ public class ComposeFragment extends Fragment {
             String caption = mEtComposeCaption.getText().toString();
             String title = mEtComposeTitle.getText().toString();
             if(caption.isEmpty() || title.isEmpty()){
-                Toast.makeText(getContext(), "Empty fields", Toast.LENGTH_SHORT).show();
+                Toasty.error(getContext(), "Empty fields", Toast.LENGTH_SHORT).show();
                 return;
             }
             if(mPhotoFile == null || mIvComposePictureToPost.getDrawable() == null){
-                Toast.makeText(getContext(), "There is no photo", Toast.LENGTH_SHORT).show();
+                Toasty.error(getContext(), "There is no photo", Toast.LENGTH_SHORT).show();
             }
             ParseUser currentUser = ParseUser.getCurrentUser();
-            savePosts(caption, title, currentUser, mPhotoFile);
+            savePosts(caption, title, currentUser, mPhotoFile, mStarRating);
             Intent i = new Intent(getContext(), MainActivity.class);
             startActivity(i);
         });
@@ -93,11 +100,12 @@ public class ComposeFragment extends Fragment {
         btnComposeSubmitPicture.setOnClickListener(this::onPickPhoto);
     }
 
-    private void savePosts(String caption, String title, ParseUser currentUser, File photoFile) {
+    private void savePosts(String caption, String title, ParseUser currentUser, File photoFile, float rating) {
             Post post = new Post();
             post.setTitle(title);
             post.setCaption(caption);
             post.setPicture(new ParseFile(photoFile));
+            post.setRating(rating);
             post.setOwner(currentUser);
             post.saveInBackground(e -> {
                 if(e != null){
@@ -123,24 +131,11 @@ public class ComposeFragment extends Fragment {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, sSELECT_PICTURE_REQUEST_CODE);
-
-
-    }
-
-    public Bitmap loadFromUri(Uri photoUri) {
-        Bitmap image = null;
-        try {
-            ImageDecoder.Source source = ImageDecoder.createSource(getContext().getContentResolver(), photoUri);
-            image = ImageDecoder.decodeBitmap(source);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return image;
     }
 
     private void launchCamera(){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        mPhotoFile = getPhotoFileUri(mPhotoFileName);
+        mPhotoFile = UtilityMethods.getPhotoFileUri(mPhotoFileName, sTAG, getContext());
 
         Uri fileProvider = FileProvider.getUriForFile(requireContext(), "com.codepath.fileprovider", mPhotoFile);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider);
@@ -149,51 +144,13 @@ public class ComposeFragment extends Fragment {
         }
     }
 
-    public File getPhotoFileUri(String fileName) {
-        // Get safe storage directory for photos
-        File mediaStorageDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), sTAG);
-
-        // Create the storage directory if it does not exist
-        if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()){
-            Log.d(sTAG, "failed to create directory");
-        }
-
-        return new File(mediaStorageDir.getPath() + File.separator + fileName);
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == sCAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Bitmap takenImage = rotateBitmapOrientation(mPhotoFile.getAbsolutePath());
-                Uri takenPhotoUri = Uri.fromFile(getPhotoFileUri(mPhotoFileName));
-                // by this point we have the camera photo on disk
-                Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
-                // See BitmapScaler.java: https://gist.github.com/nesquena/3885707fd3773c09f1bb
-                Bitmap resizedBitmap = BitmapScaler.scaleToFitWidth(rawTakenImage, 400);
-
-                // Configure byte output stream
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                byte[] bitmapdata = bos.toByteArray();
-                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, bos);
-
-                File resizedFile = getPhotoFileUri(mPhotoFileName + "_resized");
-                try {
-                    resizedFile.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                FileOutputStream fos = null;
-                try {
-                    fos = new FileOutputStream(resizedFile);
-                    fos.write(bitmapdata);
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                UtilityMethods.submitPictureFromCamera(mPhotoFileName, sTAG, getContext());
                 mIvComposePictureToPost.setImageBitmap(takenImage);
             } else {
                 Toast.makeText(getContext(), "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
@@ -202,28 +159,8 @@ public class ComposeFragment extends Fragment {
         if (requestCode == sSELECT_PICTURE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Uri photoUri = data.getData();
-                Bitmap selectedImage = loadFromUri(photoUri);
-                File f = new File(getContext().getCacheDir(), mPhotoFileName);
-                try {
-                    f.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                selectedImage.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-                byte[] bitmapdata = bos.toByteArray();
-                FileOutputStream fos = null;
-                try {
-                    fos = new FileOutputStream(f);
-                    fos.write(bitmapdata);
-                    fos.flush();
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                mPhotoFile = f;
+                Bitmap selectedImage = UtilityMethods.loadFromUri(photoUri, getContext());
+                mPhotoFile = UtilityMethods.submitPictureFromGallery(getContext(), mPhotoFileName, selectedImage);
                 mIvComposePictureToPost.setImageBitmap(selectedImage);
             }
         }

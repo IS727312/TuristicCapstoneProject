@@ -28,6 +28,7 @@
     <string name="example_caption">Example Caption</string>
     <string name="save">Save</string>
     <string name="privacy_mode">Privacy Mode:</string>
+    <string name="rating">Rating</string>
     <string-array name="privacyMode">
         <item>Choose a Privacy Mode</item>
         <item>Public</item>

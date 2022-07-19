@@ -213,13 +213,13 @@ public class FeedFragment extends Fragment {
                         }
                     }else {
                         if(alreadyRequested(postOwner)){
-                            Toast.makeText(getContext(), "Request already sent", Toast.LENGTH_SHORT).show();
+                            Toasty.error(getContext(), "Request already sent", Toast.LENGTH_SHORT).show();
                         }else {
-                            Toast.makeText(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
+                            Toasty.error(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }else{
-                    Toast.makeText(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
+                    Toasty.error(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
                 }
             }
             mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());

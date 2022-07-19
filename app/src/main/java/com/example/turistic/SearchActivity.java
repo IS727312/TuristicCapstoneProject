@@ -318,13 +318,13 @@ public class SearchActivity extends AppCompatActivity {
                 }
             }else {
                 if(alreadyRequested(postOwner)){
-                    Toast.makeText(SearchActivity.this, "Request already sent", Toast.LENGTH_SHORT).show();
+                    Toasty.error(SearchActivity.this, "Request already sent", Toast.LENGTH_SHORT).show();
                 }else {
-                    Toast.makeText(SearchActivity.this, "User already followed", Toast.LENGTH_SHORT).show();
+                    Toasty.error(SearchActivity.this, "User already followed", Toast.LENGTH_SHORT).show();
                 }
             }
         }else{
-            Toast.makeText(SearchActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
+            Toasty.error(SearchActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
         }
     }
 }
