@@ -1,7 +1,7 @@
 package com.example.turistic.adapters;
 
 import android.content.Context;
-import android.util.Log;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,16 +13,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.turistic.PostDetailsActivity;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
 import com.parse.ParseFile;
+
+import org.parceler.Parcels;
 
 import java.util.List;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     public static final String sTAG = "PostAdapter";
-    private Context mContext;
-    private List<Post> mPosts;
+    private final Context mContext;
+    private final List<Post> mPosts;
 
     public PostAdapter(Context context, List<Post> posts){
         this.mContext = context;
@@ -49,11 +52,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private ImageView mIvProfilePicture;
-        private ImageView mIvPostPicture;
-        private TextView mTvUsername;
-        private TextView mTvTitle;
-        private RatingBar mRbRating;
+        private final ImageView mIvProfilePicture;
+        private final ImageView mIvPostPicture;
+        private final TextView mTvUsername;
+        private final TextView mTvTitle;
+        private final RatingBar mRbRating;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -67,12 +70,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
         @Override
         public void onClick(View v) {
-            Log.i(sTAG, "Post Clicked");
+            int position = getAdapterPosition();
+            goToPostDetails(mPosts.get(position));
         }
 
 
         public void bind(Post post) {
-            //tvCaption.setText(post.getCaption());
             mTvTitle.setText(post.getTitle());
             mTvUsername.setText(post.getOwner().getUsername());
             mRbRating.setRating(post.getRating());
@@ -84,7 +87,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             if(profileImage != null){
                 Glide.with(mContext).load(profileImage.getUrl()).into(mIvProfilePicture);
             }
+        }
 
+        public void goToPostDetails(Post post){
+            Intent intent = new Intent(mContext, PostDetailsActivity.class);
+            // serialize the movie using parceler, use its short name as a key
+            intent.putExtra(Post.class.getSimpleName(), Parcels.wrap(post));
+            mContext.startActivity(intent);
         }
     }
 }

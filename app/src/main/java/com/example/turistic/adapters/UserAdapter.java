@@ -87,7 +87,6 @@ public class UserAdapter  extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
             if(position != RecyclerView.NO_POSITION){
                 ParseUser user = mUsers.get(position);
                 goToUserDetails(user);
-
             }
         }
 

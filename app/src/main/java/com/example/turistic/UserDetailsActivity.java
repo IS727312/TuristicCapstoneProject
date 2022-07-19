@@ -45,7 +45,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_details);
         int totalFollowers;
-        int totalFollowing;
         ParseFile profilePicture;
 
         mCurrentUser = ParseUser.getCurrentUser();

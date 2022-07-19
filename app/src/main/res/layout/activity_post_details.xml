@@ -12,17 +12,49 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="TextView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Title" />
 
     <ImageView
-        android:id="@+id/yvPostDetailsPicture"
+        android:id="@+id/ivPostDetailsPicture"
         android:layout_width="400dp"
         android:layout_height="300dp"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
+        android:contentDescription="@string/post_of_the_picture"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvPostDetailsTitle"
+        app:layout_constraintTop_toBottomOf="@+id/rbPostDetailsRating"
         tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tvPostDetailsUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivPostDetailsPicture"
+        tools:text="Meta" />
+
+    <TextView
+        android:id="@+id/tvPostDetailsCaption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvPostDetailsUsername"
+        tools:text="@string/caption" />
+
+    <RatingBar
+        android:id="@+id/rbPostDetailsRating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:clickable="false"
+        android:contentDescription="@string/rating"
+        android:isIndicator="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvPostDetailsTitle" />
 </androidx.constraintlayout.widget.ConstraintLayout>
