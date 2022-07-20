@@ -24,6 +24,9 @@ import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.adapters.UserAdapter;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
+import com.example.turistic.models.Unfollow;
+import com.parse.FindCallback;
+import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -44,6 +47,7 @@ public class SearchActivity extends AppCompatActivity {
     private String mSearchQuery;
     private ParseUser mCurrentUser;
     private int mUserPrivacyMode;
+    private List<ParseUser> followingUsers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,12 +158,10 @@ public class SearchActivity extends AppCompatActivity {
         ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
         queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
         queryRequests.addDescendingOrder("createdAt");
-        queryRequests.findInBackground((objects, e) -> {
-            mQueryRequests.addAll(objects);
-        });
+        queryRequests.findInBackground((objects, e) -> mQueryRequests.addAll(objects));
     }
 
-    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             return false;
@@ -172,7 +174,15 @@ public class SearchActivity extends AppCompatActivity {
             if(position != RecyclerView.NO_POSITION){
                 Post post = mQueryPosts.get(position);
                 ParseUser postOwner = post.getOwner();
-                followUser(postOwner);
+                switch (direction){
+                    case ItemTouchHelper.LEFT:
+                        followUser(postOwner);
+                        break;
+                    case ItemTouchHelper.RIGHT:
+                        unfollowUser(postOwner);
+                        break;
+                }
+
             }
             mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
         }
@@ -184,7 +194,7 @@ public class SearchActivity extends AppCompatActivity {
         }
     };
 
-    ItemTouchHelper.SimpleCallback userCallBack = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+    ItemTouchHelper.SimpleCallback userCallBack = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             return false;
@@ -195,7 +205,14 @@ public class SearchActivity extends AppCompatActivity {
             int position = viewHolder.getAdapterPosition();
             if(position != RecyclerView.NO_POSITION){
                 ParseUser user = mQueryUsers.get(position);
-                followUser(user);
+                switch (direction){
+                    case ItemTouchHelper.LEFT:
+                        followUser(user);
+                        break;
+                    case ItemTouchHelper.RIGHT:
+                        unfollowUser(user);
+                        break;
+                }
             }
             mUserAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
         }
@@ -300,7 +317,6 @@ public class SearchActivity extends AppCompatActivity {
                 frf.saveInBackground(e -> {
                     if (e != null) {
                         Log.e(sTAG, "Could not add user", e);
-                        return;
                     }
                 });
                 if(postOwner.getBoolean("anyoneCanFollow")) {
@@ -326,5 +342,47 @@ public class SearchActivity extends AppCompatActivity {
         }else{
             Toasty.error(SearchActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void unfollowUser(ParseUser postOwner) {
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(isAlreadyFollowed(postOwner) && !alreadyUnfollowed(postOwner)){
+                Unfollow unfollow = new Unfollow();
+                unfollow.setUserToUnfollow(postOwner);
+                unfollow.setUserWhoUnfollows(mCurrentUser);
+                unfollow.saveInBackground();
+                if(mCurrentUser.getList("following") != null){
+                    followingUsers = mCurrentUser.getList("following");
+                    assert followingUsers != null;
+                    for(ParseUser u : followingUsers){
+                        if(u.getObjectId().equals(postOwner.getObjectId())){
+                            followingUsers.remove(u);
+                            break;
+                        }
+                    }
+                    mCurrentUser.put("following", followingUsers);
+                    mCurrentUser.saveInBackground();
+                    Toasty.warning(SearchActivity.this, "Unfollowed user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                Toasty.error(SearchActivity.this, "Can not unfollow a user not followed", Toast.LENGTH_SHORT).show();
+            }
+        }else{
+            Toasty.error(SearchActivity.this, "Can not unfollow yourself", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean alreadyUnfollowed(ParseUser parseUser){
+        ArrayList<Unfollow> unfollowsList = new ArrayList<>();
+        ParseQuery<Unfollow> queryUnfollows = ParseQuery.getQuery(Unfollow.class);
+        queryUnfollows.addDescendingOrder("createdAt");
+        queryUnfollows.findInBackground((objects, e) -> unfollowsList.addAll(objects));
+        for (Unfollow uf: unfollowsList){
+            if (uf.getUserWhoUnfollows().getObjectId().equals(mCurrentUser.getObjectId())
+                    && uf.getUserToUnfollow().getObjectId().equals(parseUser.getObjectId())){
+                return true;
+            }
+        }
+        return false;
     }
 }

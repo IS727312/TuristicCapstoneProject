@@ -12,6 +12,7 @@ import androidx.fragment.app.FragmentManager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.amadeus.Amadeus;
 import com.amadeus.Params;
@@ -35,6 +37,7 @@ import com.example.turistic.fragments.FeedFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
 import com.example.turistic.models.FollowersRequestedFollowing;
+import com.example.turistic.models.Unfollow;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -48,6 +51,9 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.parse.DeleteCallback;
+import com.parse.FindCallback;
+import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -57,6 +63,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+
+import es.dmoral.toasty.Toasty;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -77,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean mSwitchLocation;
     private String mLongitude;
     private String mLatitude;
+    private List<ParseUser> followersUsers = new ArrayList<>();
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -175,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             addNewFollowers();
             checkPastsRequests();
+            removeFollowersWhoUnfollowed();
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -265,20 +275,22 @@ public class MainActivity extends AppCompatActivity {
                     if (request.getRequestedFollowing().getObjectId().equals(mCurrentUser.getObjectId())) {
                         ParseUser newFollower = request.getFollower();
                         if(!mCurrentUser.getBoolean("anyoneCanFollow")) {
-                            AlertDialog.Builder builder =
-                                    new AlertDialog.Builder(MainActivity.this).
-                                            setMessage("@" + newFollower.getUsername() + " wants to follow you\"").
-                                            setPositiveButton("Accept", (dialog, which) -> {
-                                                dialog.dismiss();
-                                                request.setStatus(true);
-                                                request.saveInBackground();
-                                                mCurrentUser.add("followers", newFollower);
-                                            }).
-                                            setNegativeButton("Decline", (dialog, which) -> {
-                                                dialog.dismiss();
-                                                request.deleteInBackground(e1 -> Log.i(sTAG, "Request Declined"));
-                                            });
-                            builder.create().show();
+                            if(!request.getStatus()){
+                                AlertDialog.Builder builder =
+                                        new AlertDialog.Builder(MainActivity.this).
+                                                setMessage("@" + newFollower.getUsername() + " wants to follow you\"").
+                                                setPositiveButton("Accept", (dialog, which) -> {
+                                                    dialog.dismiss();
+                                                    request.setStatus(true);
+                                                    request.saveInBackground();
+                                                    mCurrentUser.add("followers", newFollower);
+                                                }).
+                                                setNegativeButton("Decline", (dialog, which) -> {
+                                                    dialog.dismiss();
+                                                    request.deleteInBackground(e1 -> Log.i(sTAG, "Request Declined"));
+                                                });
+                                builder.create().show();
+                            }
                         }else{
                             mCurrentUser.add("followers", newFollower);
                             mCurrentUser.saveInBackground();
@@ -287,6 +299,32 @@ public class MainActivity extends AppCompatActivity {
                     }
             }
             });
+    }
+
+    private void removeFollowersWhoUnfollowed(){
+        ParseQuery<Unfollow> queryUnfollows = ParseQuery.getQuery(Unfollow.class);
+        queryUnfollows.include(Unfollow.KEY_USER_WHO_UNFOLLOWS);
+        queryUnfollows.addDescendingOrder("createdAt");
+        queryUnfollows.findInBackground((objects, e) -> {
+            if(e != null){
+                Toasty.error(MainActivity.this, "Error in getting Unfollows", Toast.LENGTH_SHORT).show();
+            }else{
+                if(objects.size()>0){
+                    if(mCurrentUser.getList("followers") != null){
+                        followersUsers = mCurrentUser.getList("followers");
+                        for(Unfollow uf: objects){
+                            if(uf.getUserToUnfollow().getObjectId().equals(mCurrentUser.getObjectId())){
+                                assert followersUsers != null;
+                                followersUsers.removeIf(u -> u.getObjectId().equals(uf.getUserWhoUnfollows().getObjectId()));
+                                uf.deleteInBackground();
+                                mCurrentUser.put("followers", followersUsers);
+                                mCurrentUser.saveInBackground();
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     private void checkPastsRequests(){

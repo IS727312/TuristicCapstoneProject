@@ -26,6 +26,9 @@ import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
+import com.example.turistic.models.Unfollow;
+import com.parse.FindCallback;
+import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -43,6 +46,7 @@ public class FeedFragment extends Fragment {
     private PostAdapter mAdapter;
     private List<FollowersRequestedFollowing> mQueryRequests;
     private List<Post> mAllPosts;
+    private List<ParseUser> followingUsers = new ArrayList<>();
 
     public FeedFragment(){
         // Required empty public constructor
@@ -175,7 +179,7 @@ public class FeedFragment extends Fragment {
         return false;
     }
 
-    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             return false;
@@ -187,39 +191,13 @@ public class FeedFragment extends Fragment {
             if(position != RecyclerView.NO_POSITION){
                 Post post = mAllPosts.get(position);
                 ParseUser postOwner = post.getOwner();
-                if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
-                    if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
-                        FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
-                        frf.setFollower(mCurrentUser);
-                        frf.setRequestedFollowing(postOwner);
-                        frf.saveInBackground(e -> {
-                            if (e != null) {
-                                Log.e(sTAG, "Could not add user", e);
-                                return;
-                            }
-                        });
-                        if(postOwner.getBoolean("anyoneCanFollow")) {
-                            mCurrentUser.add("following", postOwner);
-                            mCurrentUser.saveInBackground(e -> {
-                                if (e != null) {
-                                    Log.e(sTAG, "Could not add user", e);
-                                    return;
-                                }
-                                Log.i(sTAG, "Follower added successfully");
-                            });
-                            Toasty.success(getContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
-                        }else{
-                            Toasty.success(getContext(), "Request sent", Toast.LENGTH_SHORT).show();
-                        }
-                    }else {
-                        if(alreadyRequested(postOwner)){
-                            Toasty.error(getContext(), "Request already sent", Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toasty.error(getContext(), "User already followed", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }else{
-                    Toasty.error(getContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
+                switch (direction){
+                    case ItemTouchHelper.LEFT:
+                        followUser(postOwner);
+                        break;
+                    case ItemTouchHelper.RIGHT:
+                        unfollowUser(postOwner);
+                        break;
                 }
             }
             mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
@@ -248,6 +226,84 @@ public class FeedFragment extends Fragment {
         for (FollowersRequestedFollowing request: mQueryRequests){
             if(request.getFollower().getObjectId().equals(mCurrentUser.getObjectId())
                     && request.getRequestedFollowing().getObjectId().equals(owner.getObjectId())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void followUser(ParseUser postOwner){
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
+                FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
+                frf.setFollower(mCurrentUser);
+                frf.setRequestedFollowing(postOwner);
+                frf.saveInBackground(e -> {
+                    if (e != null) {
+                        Log.e(sTAG, "Could not add user", e);
+                    }
+                });
+                if(postOwner.getBoolean("anyoneCanFollow")) {
+                    mCurrentUser.add("following", postOwner);
+                    mCurrentUser.saveInBackground(e -> {
+                        if (e != null) {
+                            Log.e(sTAG, "Could not add user", e);
+                            return;
+                        }
+                        Log.i(sTAG, "Follower added successfully");
+                    });
+                    Toasty.success(requireContext(), "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }else{
+                    Toasty.success(requireContext(), "Request sent", Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                if(alreadyRequested(postOwner)){
+                    Toasty.error(requireContext(), "Request already sent", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toasty.error(requireContext(), "User already followed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }else{
+            Toasty.error(requireContext(), "Can not follow yourself", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void unfollowUser(ParseUser postOwner) {
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(isAlreadyFollowed(postOwner) && !alreadyUnfollowed(postOwner)){
+                Unfollow unfollow = new Unfollow();
+                unfollow.setUserToUnfollow(postOwner);
+                unfollow.setUserWhoUnfollows(mCurrentUser);
+                unfollow.saveInBackground();
+                if(mCurrentUser.getList("following") != null){
+                    followingUsers = mCurrentUser.getList("following");
+                    assert followingUsers != null;
+                    for(ParseUser u : followingUsers){
+                        if(u.getObjectId().equals(postOwner.getObjectId())){
+                            followingUsers.remove(u);
+                            break;
+                        }
+                    }
+                    mCurrentUser.put("following", followingUsers);
+                    mCurrentUser.saveInBackground();
+                    Toasty.warning(requireContext(), "Unfollowed user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                Toasty.error(requireContext(), "Can not unfollow a user not followed", Toast.LENGTH_SHORT).show();
+            }
+        }else{
+            Toasty.error(requireContext(), "Can not unfollow yourself", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean alreadyUnfollowed(ParseUser parseUser){
+        ArrayList<Unfollow> unfollowsList = new ArrayList<>();
+        ParseQuery<Unfollow> queryUnfollows = ParseQuery.getQuery(Unfollow.class);
+        queryUnfollows.addDescendingOrder("createdAt");
+        queryUnfollows.findInBackground((objects, e) -> unfollowsList.addAll(objects));
+        for (Unfollow uf: unfollowsList){
+            if (uf.getUserWhoUnfollows().getObjectId().equals(mCurrentUser.getObjectId())
+                    && uf.getUserToUnfollow().getObjectId().equals(parseUser.getObjectId())){
                 return true;
             }
         }
