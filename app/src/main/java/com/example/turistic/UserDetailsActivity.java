@@ -17,10 +17,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.turistic.adapters.PostAdapter;
+import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
+import com.example.turistic.models.Unfollow;
 import com.parse.ParseFile;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -30,6 +33,8 @@ import org.parceler.Parcels;
 import java.util.ArrayList;
 import java.util.List;
 
+import es.dmoral.toasty.Toasty;
+
 public class UserDetailsActivity extends AppCompatActivity {
 
     public static final String sTAG = "UserDetailsActivity";
@@ -38,6 +43,8 @@ public class UserDetailsActivity extends AppCompatActivity {
     private PostAdapter mPostAdapter;
     private ParseUser mCurrentUser;
     private int mUserPrivacyMode;
+    private List<ParseUser> followingUsers = new ArrayList<>();
+    private List<FollowersRequestedFollowing> mQueryRequests;
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -59,11 +66,13 @@ public class UserDetailsActivity extends AppCompatActivity {
         Button btnUserDetailsFollowStatus = findViewById(R.id.btnUserDetailsFollowStatus);
 
         mUserPosts = new ArrayList<>();
+        mQueryRequests = new ArrayList<>();
         mPostAdapter = new PostAdapter(this, mUserPosts);
         rvUserDetailsPosts.setAdapter(mPostAdapter);
         rvUserDetailsPosts.setLayoutManager(new LinearLayoutManager(this));
 
         getPosts();
+        getRequests();
 
         if(mUser.getJSONArray("followers") == null){
             totalFollowers = 0;
@@ -82,8 +91,22 @@ public class UserDetailsActivity extends AppCompatActivity {
         if(isFollowing(mUser)){
             btnUserDetailsFollowStatus.setText(R.string.FollowStatus1);
             btnUserDetailsFollowStatus.setBackgroundColor(Color.WHITE);
+            btnUserDetailsFollowStatus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //followUser(mUser);
+                    Toasty.success(UserDetailsActivity.this, "Follow", Toast.LENGTH_SHORT).show();
+                }
+            });
         }else{
             btnUserDetailsFollowStatus.setText(R.string.FollowStatus2);
+            btnUserDetailsFollowStatus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //unfollowUser(mUser);
+                    Toasty.error(UserDetailsActivity.this, "Unfollow", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         if(mUserPosts.size() == 0){
@@ -153,6 +176,19 @@ public class UserDetailsActivity extends AppCompatActivity {
         });
     }
 
+    private void getRequests() {
+        ParseQuery<FollowersRequestedFollowing> queryRequests = ParseQuery.getQuery(FollowersRequestedFollowing.class);
+        queryRequests.include(FollowersRequestedFollowing.sKEY_FOLLOWER);
+        queryRequests.addDescendingOrder("createdAt");
+        queryRequests.findInBackground((objects, e) -> {
+            if(e != null){
+                Log.e(sTAG, "Issue with getting Requests");
+                return;
+            }
+            mQueryRequests.addAll(objects);
+        });
+    }
+
     private void onUserIsPrivate() {
         Log.i(sTAG, "PRIVATE");
     }
@@ -171,5 +207,105 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     private void onUserIsPublic(Post post) {
         mUserPosts.add(post);
+    }
+
+    private void followUser(ParseUser postOwner){
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(!isAlreadyFollowed(postOwner) && !alreadyRequested(postOwner)){
+                FollowersRequestedFollowing frf = new FollowersRequestedFollowing();
+                frf.setFollower(mCurrentUser);
+                frf.setRequestedFollowing(postOwner);
+                frf.saveInBackground(e -> {
+                    if (e != null) {
+                        Log.e(sTAG, "Could not add user", e);
+                    }
+                });
+                if(postOwner.getBoolean("anyoneCanFollow")) {
+                    mCurrentUser.add("following", postOwner);
+                    mCurrentUser.saveInBackground(e -> {
+                        if (e != null) {
+                            Log.e(sTAG, "Could not add user", e);
+                            return;
+                        }
+                        Log.i(sTAG, "Follower added successfully");
+                    });
+                    Toasty.success(UserDetailsActivity.this, "Following user: " + postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }else{
+                    Toasty.success(UserDetailsActivity.this, "Request sent", Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                if(alreadyRequested(postOwner)){
+                    Toasty.error(UserDetailsActivity.this, "Request already sent", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toasty.error(UserDetailsActivity.this, "User already followed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }else{
+            Toasty.error(UserDetailsActivity.this, "Can not follow yourself", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void unfollowUser(ParseUser postOwner) {
+        if(!postOwner.getObjectId().equals(mCurrentUser.getObjectId())){
+            if(isAlreadyFollowed(postOwner) && !alreadyUnfollowed(postOwner)){
+                Unfollow unfollow = new Unfollow();
+                unfollow.setUserToUnfollow(postOwner);
+                unfollow.setUserWhoUnfollows(mCurrentUser);
+                unfollow.saveInBackground();
+                if(mCurrentUser.getList("following") != null){
+                    followingUsers = mCurrentUser.getList("following");
+                    assert followingUsers != null;
+                    for(ParseUser u : followingUsers){
+                        if(u.getObjectId().equals(postOwner.getObjectId())){
+                            followingUsers.remove(u);
+                            break;
+                        }
+                    }
+                    mCurrentUser.put("following", followingUsers);
+                    mCurrentUser.saveInBackground();
+                    Toasty.warning(UserDetailsActivity.this, "Unfollowed user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                Toasty.error(UserDetailsActivity.this, "Can not unfollow a user not followed", Toast.LENGTH_SHORT).show();
+            }
+        }else{
+            Toasty.error(UserDetailsActivity.this, "Can not unfollow yourself", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean alreadyUnfollowed(ParseUser parseUser){
+        ArrayList<Unfollow> unfollowsList = new ArrayList<>();
+        ParseQuery<Unfollow> queryUnfollows = ParseQuery.getQuery(Unfollow.class);
+        queryUnfollows.addDescendingOrder("createdAt");
+        queryUnfollows.findInBackground((objects, e) -> unfollowsList.addAll(objects));
+        for (Unfollow uf: unfollowsList){
+            if (uf.getUserWhoUnfollows().getObjectId().equals(mCurrentUser.getObjectId())
+                    && uf.getUserToUnfollow().getObjectId().equals(parseUser.getObjectId())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isAlreadyFollowed(ParseUser postOwner){
+        ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
+        if(followingList != null) {
+            for (ParseUser user : followingList) {
+                if (postOwner.getObjectId().equals(user.getObjectId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean alreadyRequested(ParseUser owner) {
+        for (FollowersRequestedFollowing request: mQueryRequests){
+            if(request.getFollower().getObjectId().equals(mCurrentUser.getObjectId())
+                    && request.getRequestedFollowing().getObjectId().equals(owner.getObjectId())){
+                return true;
+            }
+        }
+        return false;
     }
 }

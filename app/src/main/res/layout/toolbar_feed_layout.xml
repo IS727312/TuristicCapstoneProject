@@ -7,29 +7,29 @@
     android:orientation="horizontal"
     >
 
-    <ImageButton
-        android:id="@+id/btnFeedSearchPost"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/ivFeedSearchPost"
+        android:layout_width="57dp"
         android:layout_height="50dp"
         android:layout_weight="1"
-        android:contentDescription="@string/app_name"
         app:srcCompat="@android:drawable/ic_menu_search" />
 
     <ImageView
         android:id="@+id/ivLogo"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="50dp"
         android:layout_weight="1"
         android:contentDescription="@string/logo"
-        app:srcCompat="@drawable/logo"
-        tools:srcCompat="@drawable/logo" />
+        app:srcCompat="@mipmap/turistic_icon_foreground"
+        tools:srcCompat="@mipmap/turistic_icon_foreground" />
 
-    <ImageButton
-        android:id="@+id/btnFeedLogOut"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/ivFeedLogOut"
+        android:layout_width="57dp"
         android:layout_height="50dp"
         android:layout_weight="1"
-        android:contentDescription="@string/log_out"
-        app:srcCompat="@android:drawable/ic_input_delete"
-        tools:ignore="ImageContrastCheck" />
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
+        tools:ignore="ImageContrastCheck"
+        android:contentDescription="TODO" />
+
 </LinearLayout>

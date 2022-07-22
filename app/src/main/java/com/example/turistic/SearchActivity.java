@@ -25,8 +25,6 @@ import com.example.turistic.adapters.UserAdapter;
 import com.example.turistic.models.FollowersRequestedFollowing;
 import com.example.turistic.models.Post;
 import com.example.turistic.models.Unfollow;
-import com.parse.FindCallback;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -47,7 +45,7 @@ public class SearchActivity extends AppCompatActivity {
     private String mSearchQuery;
     private ParseUser mCurrentUser;
     private int mUserPrivacyMode;
-    private List<ParseUser> followingUsers = new ArrayList<>();
+    private List<ParseUser> mFollowingUsers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -352,15 +350,15 @@ public class SearchActivity extends AppCompatActivity {
                 unfollow.setUserWhoUnfollows(mCurrentUser);
                 unfollow.saveInBackground();
                 if(mCurrentUser.getList("following") != null){
-                    followingUsers = mCurrentUser.getList("following");
-                    assert followingUsers != null;
-                    for(ParseUser u : followingUsers){
+                    mFollowingUsers = mCurrentUser.getList("following");
+                    assert mFollowingUsers != null;
+                    for(ParseUser u : mFollowingUsers){
                         if(u.getObjectId().equals(postOwner.getObjectId())){
-                            followingUsers.remove(u);
+                            mFollowingUsers.remove(u);
                             break;
                         }
                     }
-                    mCurrentUser.put("following", followingUsers);
+                    mCurrentUser.put("following", mFollowingUsers);
                     mCurrentUser.saveInBackground();
                     Toasty.warning(SearchActivity.this, "Unfollowed user: "+ postOwner.getUsername(), Toast.LENGTH_SHORT).show();
                 }

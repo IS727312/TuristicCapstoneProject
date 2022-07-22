@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.turistic.EditUserInformationActivity;
+import com.example.turistic.UserListActivity;
 import com.example.turistic.adapters.PostAdapter;
 import com.example.turistic.R;
 import com.example.turistic.models.Post;
@@ -99,6 +100,20 @@ public class ProfileFragment extends Fragment {
             Intent i = new Intent(getActivity(), EditUserInformationActivity.class);
             startActivity(i);
         });
+
+        tvProfileFollowers.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listUsers();
+            }
+        });
+
+        tvProfileFollowing.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listUsers();
+            }
+        });
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -116,5 +131,10 @@ public class ProfileFragment extends Fragment {
             }
             mAdapter.notifyDataSetChanged();
         });
+    }
+
+    private void listUsers(){
+        Intent i = new Intent(getContext(), UserListActivity.class);
+        startActivity(i);
     }
 }

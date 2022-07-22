@@ -51,4 +51,6 @@
     <string name="FollowStatus1">Followed</string>
     <string name="FollowStatus2">Follow</string>
     <string name="user_posts_are_private">User Posts are Private</string>
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
 </resources>

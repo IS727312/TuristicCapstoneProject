@@ -12,7 +12,6 @@ import androidx.fragment.app.FragmentManager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -26,7 +25,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.ImageButton;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.amadeus.Amadeus;
@@ -51,9 +51,6 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.parse.DeleteCallback;
-import com.parse.FindCallback;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
@@ -110,33 +107,39 @@ public class MainActivity extends AppCompatActivity {
         mLatitude = "41.3874";
         mLongitude = "2.1686";
 
-        ImageButton btnFeedLogOut = findViewById(R.id.btnFeedLogOut);
-        ImageButton btnFeedSearchPost = findViewById(R.id.btnFeedSearchPost);
+        ImageView ivFeedSearchPost = findViewById(R.id.ivFeedSearchPost);
+        ImageView ivFeedLogOut = findViewById(R.id.ivFeedLogOut);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(6000);
         mLocationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        btnFeedLogOut.setOnClickListener(v -> {
-            //LogInManager is used for logging out of Facebook
-            LoginManager.getInstance().logOut();
-            ParseUser.logOutInBackground(e -> {
-                if (e != null) {
-                    Log.e(sTAG, "Issue with Logging Out: " + e);
-                    return;
-                }
-                ParseUser currentUser = ParseUser.getCurrentUser();
-                if (currentUser == null) {
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(i);
-                }
-            });
+        ivFeedSearchPost.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this, SearchActivity.class);
+                startActivity(i);
+            }
         });
 
-        btnFeedSearchPost.setOnClickListener(v -> {
-            Intent i = new Intent(MainActivity.this, SearchActivity.class);
-            startActivity(i);
+        ivFeedLogOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //LogInManager is used for logging out of Facebook
+                LoginManager.getInstance().logOut();
+                ParseUser.logOutInBackground(e -> {
+                    if (e != null) {
+                        Log.e(sTAG, "Issue with Logging Out: " + e);
+                        return;
+                    }
+                    ParseUser currentUser = ParseUser.getCurrentUser();
+                    if (currentUser == null) {
+                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(i);
+                    }
+                });
+            }
         });
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
