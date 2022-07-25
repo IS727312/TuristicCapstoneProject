@@ -3,7 +3,6 @@ package com.example.turistic;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
 import com.example.turistic.fragments.UserListFragment;
@@ -12,7 +11,6 @@ import com.google.android.material.tabs.TabLayout;
 public class UserListActivity extends AppCompatActivity {
 
     public static final String TAG = "UserListActivity";
-    private FragmentTransaction fragmentTransaction;
     private boolean mIsFollowerList = true;
     private Bundle mBundle;
 
@@ -26,18 +24,14 @@ public class UserListActivity extends AppCompatActivity {
 
         //Default selection
         mBundle.putBoolean("followers", mIsFollowerList);
-        switchList();
+        switchTab();
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if(tab.getPosition() == 0) {
-                    mIsFollowerList = true;
-                }else{
-                    mIsFollowerList = false;
-                }
+                mIsFollowerList = tab.getPosition() == 0;
                 mBundle.putBoolean("followers", mIsFollowerList);
-                switchList();
+                switchTab();
             }
 
             @Override
@@ -52,7 +46,7 @@ public class UserListActivity extends AppCompatActivity {
         });
     }
 
-    private void switchList(){
+    private void switchTab(){
         Fragment fragment = new UserListFragment();
         fragment.setArguments(mBundle);
         FragmentManager fragmentManager = getSupportFragmentManager();

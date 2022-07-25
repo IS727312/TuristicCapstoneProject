@@ -1,23 +1,14 @@
 package com.example.turistic.adapters;
 
-import static com.example.turistic.enumerations.PrivacyMode.FOLLOWERS_ONLY;
-import static com.example.turistic.enumerations.PrivacyMode.FRIENDS_ONLY;
-import static com.example.turistic.enumerations.PrivacyMode.PRIVATE;
-import static com.example.turistic.enumerations.PrivacyMode.PUBLIC;
-
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -28,10 +19,8 @@ import com.parse.ParseUser;
 
 import org.parceler.Parcels;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import es.dmoral.toasty.Toasty;
 
 public class UserAdapter  extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
 

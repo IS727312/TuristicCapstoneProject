@@ -12,9 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.airbnb.lottie.L;
 import com.example.turistic.R;
 import com.example.turistic.adapters.UserAdapter;
 import com.parse.ParseQuery;
@@ -22,9 +20,6 @@ import com.parse.ParseUser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-
-import es.dmoral.toasty.Toasty;
 
 public class UserListFragment extends Fragment {
 
@@ -33,7 +28,7 @@ public class UserListFragment extends Fragment {
     private List<ParseUser> mUsersList;
     private List<ParseUser> mUsersIds;
     private UserAdapter mUserAdapter;
-    private boolean isFollowerList;
+    private boolean mIsFollowerList;
     private int mUserPrivacyMode;
 
     public UserListFragment() {
@@ -45,9 +40,9 @@ public class UserListFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         if(getArguments() != null){
-            isFollowerList = getArguments().getBoolean("followers");
+            mIsFollowerList = getArguments().getBoolean("followers");
         }else{
-            isFollowerList = false;
+            mIsFollowerList = false;
         }
 
         return inflater.inflate(R.layout.fragment_user_list, container, false);
@@ -67,7 +62,7 @@ public class UserListFragment extends Fragment {
     }
 
     private void getUsers(){
-        if (isFollowerList){
+        if (mIsFollowerList){
             mUsersIds = mCurrentUser.getList("followers");
         }else {
             mUsersIds = mCurrentUser.getList("following");

@@ -6,15 +6,12 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
-import com.parse.LogInCallback;
-import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.facebook.ParseFacebookUtils;
 
@@ -22,6 +19,7 @@ import org.json.JSONException;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 import es.dmoral.toasty.Toasty;
 
@@ -30,8 +28,6 @@ public class LoginActivity extends AppCompatActivity {
     public static final String sTAG = "LoginActivity";
     private EditText mEtLoginUsername;
     private EditText mEtLoginPassword;
-    private Button mBtnLogin;
-    private Button mBtnSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,17 +41,17 @@ public class LoginActivity extends AppCompatActivity {
 
         mEtLoginPassword = findViewById(R.id.etLoginPassword);
         mEtLoginUsername = findViewById(R.id.etLoginUsername);
-        mBtnLogin = findViewById(R.id.btnLogin);
-        mBtnSignUp = findViewById(R.id.btnSignUp);
+        Button btnLogin = findViewById(R.id.btnLogin);
+        Button btnSignUp = findViewById(R.id.btnSignUp);
         btnLoginFacebook = findViewById(R.id.btnLoginFacebook);
 
-        mBtnLogin.setOnClickListener(v -> {
+        btnLogin.setOnClickListener(v -> {
             String password = mEtLoginPassword.getText().toString();
             String username = mEtLoginUsername.getText().toString();
             loginUser(username, password);
         });
 
-        mBtnSignUp.setOnClickListener(v -> {
+        btnSignUp.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(i);
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
@@ -67,25 +63,22 @@ public class LoginActivity extends AppCompatActivity {
             dialog.setMessage("Logging in...");
             dialog.show();
             Collection<String> permissions = Arrays.asList("public_profile", "email");
-            ParseFacebookUtils.logInWithReadPermissionsInBackground(LoginActivity.this, permissions, new LogInCallback() {
-                @Override
-                public void done(ParseUser user, ParseException err) {
-                    dialog.dismiss();
-                    if (err != null) {
-                        Log.e(sTAG, "done: ", err);
-                        Toasty.error(LoginActivity.this, err.getMessage(), Toast.LENGTH_LONG).show();
-                    } else if (user == null) {
-                        Toasty.error(LoginActivity.this, "The user cancelled the Facebook login.", Toast.LENGTH_LONG).show();
-                        Log.d(sTAG, "Uh oh. The user cancelled the Facebook login.");
-                    } else if (user.isNew()) {
-                        Toasty.success(LoginActivity.this, "User signed up and logged in through Facebook.", Toast.LENGTH_LONG).show();
-                        Log.d(sTAG, "User signed up and logged in through Facebook!");
-                        getUserDetailFromFB();
-                    } else {
-                        Toasty.success(LoginActivity.this, "User logged in through Facebook.", Toast.LENGTH_LONG).show();
-                        Log.d(sTAG, "User logged in through Facebook!");
-                        goFeedActivity();
-                    }
+            ParseFacebookUtils.logInWithReadPermissionsInBackground(LoginActivity.this, permissions, (user, err) -> {
+                dialog.dismiss();
+                if (err != null) {
+                    Log.e(sTAG, "done: ", err);
+                    Toasty.error(LoginActivity.this, Objects.requireNonNull(err.getMessage()), Toast.LENGTH_LONG).show();
+                } else if (user == null) {
+                    Toasty.error(LoginActivity.this, "The user cancelled the Facebook login.", Toast.LENGTH_LONG).show();
+                    Log.d(sTAG, "Uh oh. The user cancelled the Facebook login.");
+                } else if (user.isNew()) {
+                    Toasty.success(LoginActivity.this, "User signed up and logged in through Facebook.", Toast.LENGTH_LONG).show();
+                    Log.d(sTAG, "User signed up and logged in through Facebook!");
+                    getUserDetailFromFB();
+                } else {
+                    Toasty.success(LoginActivity.this, "User logged in through Facebook.", Toast.LENGTH_LONG).show();
+                    Log.d(sTAG, "User logged in through Facebook!");
+                    goFeedActivity();
                 }
             });
         });

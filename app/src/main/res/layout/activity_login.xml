@@ -69,7 +69,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/login_with_facebook" />
+        android:backgroundTint="@color/com_facebook_blue"
+        android:text="@string/login_with_facebook"
+        android:textColor="#000000" />
 
     <Button
         android:id="@+id/btnSignUp"

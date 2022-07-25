@@ -47,14 +47,18 @@ public class FeedFragment extends Fragment {
     private List<FollowersRequestedFollowing> mQueryRequests;
     private List<Post> mAllPosts;
     private List<ParseUser> followingUsers = new ArrayList<>();
+    private boolean mIsFollowingTab;
 
     public FeedFragment(){
         // Required empty public constructor
     }
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        mIsFollowingTab = getArguments().getBoolean("tab");
+
         return inflater.inflate(R.layout.fragment_feed, container, false);
     }
 
@@ -66,12 +70,13 @@ public class FeedFragment extends Fragment {
 
         mAllPosts = new ArrayList<>();
         mQueryRequests = new ArrayList<>();
-        mAdapter = new PostAdapter(getContext(), mAllPosts);
+        Log.i(sTAG, getActivity().toString());
+        mAdapter = new PostAdapter(getActivity(), mAllPosts);
         mCurrentUser = ParseUser.getCurrentUser();
 
         rvFeedFragment.setAdapter(mAdapter);
         rvFeedFragment.setLayoutManager(new LinearLayoutManager(getContext()));
-
+        Toasty.success(getActivity(), "" + mIsFollowingTab, Toast.LENGTH_SHORT).show();
         getPosts();
         getRequests();
         mSrFeedFragment.setOnRefreshListener(() -> {
@@ -83,7 +88,6 @@ public class FeedFragment extends Fragment {
         });
 
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvFeedFragment);
-
     }
 
     private void getRequests() {
@@ -101,11 +105,10 @@ public class FeedFragment extends Fragment {
 
     @SuppressLint("NotifyDataSetChanged")
     private void getPosts() {
-
         // specify what type of data we want to query - Post.class
         ParseQuery<Post> query = ParseQuery.getQuery(Post.class);
         query.include(Post.sKEY_OWNER);
-        query.setLimit(20);
+        query.setLimit(30);
         query.addDescendingOrder("createdAt");
         // start an asynchronous call for posts
         query.findInBackground((posts, e) -> {
@@ -114,21 +117,45 @@ public class FeedFragment extends Fragment {
                 return;
             }
             for (Post post: posts){
-                mUserPrivacyMode = post.getOwner().getInt("profileMode");
-                switch (mUserPrivacyMode){
-                    case PUBLIC:
-                        onUserIsPublic(post);
-                        break;
-                    case FOLLOWERS_ONLY:
-                        onUserIsFollowersOnly(post);
-                        break;
-                    case FRIENDS_ONLY:
-                        onUserIsFriendsOnly(post);
-                        break;
-                    case PRIVATE: default:
-                        onUserIsPrivate();
-                        break;
+                if(mIsFollowingTab){
+                    if(isFollowing(post.getOwner())){
+                        mUserPrivacyMode = post.getOwner().getInt("profileMode");
+                        switch (mUserPrivacyMode){
+                            case PUBLIC:
+                                onUserIsPublic(post);
+                                break;
+                            case FOLLOWERS_ONLY:
+                                onUserIsFollowersOnly(post);
+                                break;
+                            case FRIENDS_ONLY:
+                                onUserIsFriendsOnly(post);
+                                break;
+                            case PRIVATE: default:
+                                onUserIsPrivate();
+                                break;
+                        }
+                    }
+                }else {
+                    if(!isFollowing(post.getOwner())) {
+                        mUserPrivacyMode = post.getOwner().getInt("profileMode");
+                        switch (mUserPrivacyMode) {
+                            case PUBLIC:
+                                onUserIsPublic(post);
+                                break;
+                            case FOLLOWERS_ONLY:
+                                onUserIsFollowersOnly(post);
+                                break;
+                            case FRIENDS_ONLY:
+                                onUserIsFriendsOnly(post);
+                                break;
+                            case PRIVATE:
+                            default:
+                                onUserIsPrivate();
+                                break;
+                        }
+                    }
                 }
+
             }
             mAdapter.notifyDataSetChanged();
         });

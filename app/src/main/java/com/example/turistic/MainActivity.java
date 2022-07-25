@@ -34,6 +34,7 @@ import com.amadeus.Params;
 import com.amadeus.exceptions.ResponseException;
 import com.amadeus.resources.PointOfInterest;
 import com.example.turistic.fragments.FeedFragment;
+import com.example.turistic.fragments.FeedTabFragment;
 import com.example.turistic.fragments.ProfileFragment;
 import com.example.turistic.fragments.ComposeFragment;
 import com.example.turistic.models.FollowersRequestedFollowing;
@@ -164,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.action_feed:
                 default:
-                    fragment = new FeedFragment();
+                    fragment = new FeedTabFragment();
                     if (mPrevFragment == 1) {
                         slideInAnim = R.anim.slide_in_left;
                         slideOutAnim = R.anim.slide_out_right;

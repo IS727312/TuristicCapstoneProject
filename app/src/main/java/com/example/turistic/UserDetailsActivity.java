@@ -94,8 +94,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             btnUserDetailsFollowStatus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //followUser(mUser);
-                    Toasty.success(UserDetailsActivity.this, "Follow", Toast.LENGTH_SHORT).show();
+                    unfollowUser(mUser);
                 }
             });
         }else{
@@ -103,8 +102,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             btnUserDetailsFollowStatus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //unfollowUser(mUser);
-                    Toasty.error(UserDetailsActivity.this, "Unfollow", Toast.LENGTH_SHORT).show();
+                    followUser(mUser);
                 }
             });
         }
@@ -115,7 +113,9 @@ public class UserDetailsActivity extends AppCompatActivity {
     }
 
     private boolean isFollowing(ParseUser owner) {
-        ArrayList<ParseUser> followingList = (ArrayList) mCurrentUser.get("following");
+        List<ParseUser> followingList;
+        followingList = new ArrayList<>();
+        followingList =  mCurrentUser.getList("following");
         if(followingList != null){
             for(ParseUser user: followingList){
                 if(user.getObjectId().equals(owner.getObjectId())){
