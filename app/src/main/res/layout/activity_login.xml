@@ -7,11 +7,20 @@
     android:layout_margin="16dp"
     android:orientation="vertical"
     tools:context=".LoginActivity">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="176dp"
+        app:srcCompat="@mipmap/turistic_icon_foreground"
+        tools:srcCompat="@mipmap/turistic_icon_foreground" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/outlinedTextField"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/username"
+        app:startIconDrawable="@drawable/ic_baseline_supervisor_account_24"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -31,7 +40,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/password"
+        app:startIconDrawable="@drawable/ic_baseline_lock_24"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etLoginPassword"
             android:layout_width="match_parent"
@@ -41,7 +52,7 @@
             android:ems="10"
             android:inputType="textPassword"
             android:minHeight="48dp"
-            />
+            android:textColorHint="#757575" />
     </com.google.android.material.textfield.TextInputLayout>
 
 
